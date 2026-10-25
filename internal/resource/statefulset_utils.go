@@ -18,6 +18,12 @@ const (
 	TEAMCITY_DB_URL_SECRET_KEY      = "connectionUrl"
 )
 
+// terminationGracePeriodSeconds must be long enough for the image's own graceful
+// stop sequence (TEAMCITY_STOP_WAIT_TIME, 60 seconds by default) to finish
+// before kubelet sends SIGKILL. Without it the pod falls back to the Kubernetes
+// default of 30 seconds, which is shorter than the image's stop wait.
+const teamcityGracePeriodSeconds int64 = 90
+
 func CreateEmptyStatefulSet(name string, namespace string, labels map[string]string) v1.StatefulSet {
 	return v1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -96,19 +102,6 @@ func NodeDataDirServerOpt(nodeDataDirPath string) string {
 func XmxValueCalculator(percentage int64, requestedMemoryValue int64) (xmxValue string) {
 	ratio := float64(percentage) / 100
 	xmxValue = resource.NewQuantity(int64(ratio*float64(requestedMemoryValue)), resource.DecimalSI).String()
-	return
-}
-
-func LifecycleOptionsBuilder() (lifecycle *v12.Lifecycle) {
-	lifecycle = &v12.Lifecycle{
-		PostStart: nil,
-		PreStop: &v12.LifecycleHandler{
-			Exec: &v12.ExecAction{
-				Command: []string{"/bin/sh", "-c", "/opt/teamcity/bin/shutdown.sh"},
-			},
-			HTTPGet: nil,
-		},
-	}
 	return
 }
 
@@ -197,7 +190,6 @@ func ConfigureContainer(instance *TeamCity, node Node, container *v12.Container)
 	container.Image = instance.Spec.Image
 	container.ImagePullPolicy = v12.PullIfNotPresent
 
-	container.Lifecycle = LifecycleOptionsBuilder()
 	container.LivenessProbe = &node.Spec.LivenessProbeSettings
 	container.ReadinessProbe = &node.Spec.ReadinessProbeSettings
 	container.StartupProbe = &node.Spec.StartupProbeSettings
@@ -222,6 +214,7 @@ func ConfigureStatefulSet(instance *TeamCity, node Node, current *v1.StatefulSet
 	volumes = append(volumes, BuildVolumesFromPersistentVolumeClaims(instance.NodePersistentVolumeClaimsFor(node))...)
 	volumes = append(volumes, BuildVolumesFromTeamCityVolumes(instance.VolumesFor(node))...)
 	current.Spec.Replicas = pointer.Int32(1)
+	current.Spec.Template.Spec.TerminationGracePeriodSeconds = pointer.Int64(teamcityGracePeriodSeconds)
 	current.Spec.Template.Annotations = node.Annotations
 	current.Spec.Template.Spec.Volumes = volumes
 	current.Spec.Template.Spec.InitContainers = node.Spec.InitContainers

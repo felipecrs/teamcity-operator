@@ -78,15 +78,22 @@ var _ = Describe("Secondary StatefulSet", func() {
 			}
 
 		})
-		It("sets prestop command for container", func() {
+		It("does not set a container lifecycle to let the image handle SIGTERM gracefully", func() {
 			objectList, err := DefaultSecondaryStatefulSetBuilder.BuildObjectList()
 			Expect(err).NotTo(HaveOccurred())
 			for _, object := range objectList {
 				err = DefaultSecondaryStatefulSetBuilder.Update(object)
 				statefulSet := object.(*v1.StatefulSet)
-				expected := []string{"/bin/sh", "-c", "/opt/teamcity/bin/shutdown.sh"}
-				actual := statefulSet.Spec.Template.Spec.Containers[0].Lifecycle.PreStop.Exec.Command
-				Expect(actual).To(Equal(expected))
+				Expect(statefulSet.Spec.Template.Spec.Containers[0].Lifecycle).To(BeNil())
+			}
+		})
+		It("sets termination grace period long enough for a graceful server stop", func() {
+			objectList, err := DefaultSecondaryStatefulSetBuilder.BuildObjectList()
+			Expect(err).NotTo(HaveOccurred())
+			for _, object := range objectList {
+				err = DefaultSecondaryStatefulSetBuilder.Update(object)
+				statefulSet := object.(*v1.StatefulSet)
+				Expect(*statefulSet.Spec.Template.Spec.TerminationGracePeriodSeconds).To(Equal(int64(90)))
 			}
 		})
 		It("sets responsibility in serveropts correctly", func() {

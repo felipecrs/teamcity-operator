@@ -66,16 +66,23 @@ var _ = Describe("StatefulSet", func() {
 			actual := statefulSet.Spec.Template.Spec.Containers[0].Resources
 			Expect(actual).To(Equal(expected))
 		})
-		It("sets prestop command for container", func() {
+		It("does not set a container lifecycle to let the image handle SIGTERM gracefully", func() {
 			obj, err := DefaultStatefulSetBuilder.BuildObjectList()
 			Expect(err).NotTo(HaveOccurred())
 			stsObject := obj[0]
 			err = DefaultStatefulSetBuilder.Update(stsObject)
 			Expect(err).NotTo(HaveOccurred())
 			statefulSet := stsObject.(*v1.StatefulSet)
-			expected := []string{"/bin/sh", "-c", "/opt/teamcity/bin/shutdown.sh"}
-			actual := statefulSet.Spec.Template.Spec.Containers[0].Lifecycle.PreStop.Exec.Command
-			Expect(actual).To(Equal(expected))
+			Expect(statefulSet.Spec.Template.Spec.Containers[0].Lifecycle).To(BeNil())
+		})
+		It("sets termination grace period long enough for a graceful server stop", func() {
+			obj, err := DefaultStatefulSetBuilder.BuildObjectList()
+			Expect(err).NotTo(HaveOccurred())
+			stsObject := obj[0]
+			err = DefaultStatefulSetBuilder.Update(stsObject)
+			Expect(err).NotTo(HaveOccurred())
+			statefulSet := stsObject.(*v1.StatefulSet)
+			Expect(*statefulSet.Spec.Template.Spec.TerminationGracePeriodSeconds).To(Equal(int64(90)))
 		})
 		It("calculates and provides env vars correctly", func() {
 			obj, err := DefaultStatefulSetBuilder.BuildObjectList()
