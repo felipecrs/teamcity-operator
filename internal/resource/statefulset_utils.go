@@ -3,6 +3,7 @@ package resource
 import (
 	"fmt"
 	. "git.jetbrains.team/tch/teamcity-operator/api/v1beta1"
+	"golang.org/x/exp/slices"
 	v1 "k8s.io/api/apps/v1"
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -18,11 +19,14 @@ const (
 	TEAMCITY_DB_URL_SECRET_KEY      = "connectionUrl"
 )
 
-// terminationGracePeriodSeconds must be long enough for the image's own graceful
-// stop sequence (TEAMCITY_STOP_WAIT_TIME, 60 seconds by default) to finish
-// before kubelet sends SIGKILL. Without it the pod falls back to the Kubernetes
-// default of 30 seconds, which is shorter than the image's stop wait.
-const teamcityGracePeriodSeconds int64 = 90
+// Kubelet waits terminationGracePeriodSeconds from the start of pod termination
+// before it sends SIGKILL, therefore the value must cover the image's own
+// graceful stop sequence: the latter waits up to StopWaitTimeSeconds
+// (injected as TEAMCITY_STOP_WAIT_TIME) before catalina.sh force-kills the
+// JVM. A fixed buffer on top of the stop wait covers that force-kill and the
+// final teardown. Without an explicit grace period the pod falls back to the
+// Kubernetes default of 30 seconds, which is shorter than the default stop wait.
+const teamcityTerminationGraceBufferSeconds int64 = 30
 
 func CreateEmptyStatefulSet(name string, namespace string, labels map[string]string) v1.StatefulSet {
 	return v1.StatefulSet{
@@ -214,7 +218,8 @@ func ConfigureStatefulSet(instance *TeamCity, node Node, current *v1.StatefulSet
 	volumes = append(volumes, BuildVolumesFromPersistentVolumeClaims(instance.NodePersistentVolumeClaimsFor(node))...)
 	volumes = append(volumes, BuildVolumesFromTeamCityVolumes(instance.VolumesFor(node))...)
 	current.Spec.Replicas = pointer.Int32(1)
-	current.Spec.Template.Spec.TerminationGracePeriodSeconds = pointer.Int64(teamcityGracePeriodSeconds)
+	current.Spec.Template.Spec.TerminationGracePeriodSeconds =
+		pointer.Int64(instance.StopWaitTime() + teamcityTerminationGraceBufferSeconds)
 	current.Spec.Template.Annotations = node.Annotations
 	current.Spec.Template.Spec.Volumes = volumes
 	current.Spec.Template.Spec.InitContainers = node.Spec.InitContainers
@@ -280,6 +285,16 @@ func BuildEnvVariablesFromGlobalAndNodeSpecificSettings(instance *TeamCity, node
 	xmxValue := XmxValueCalculator(instance.Spec.XmxPercentage, node.Spec.Requests.Memory().Value())
 	envVars := DefaultEnvironmentVariableBuilder(node.Name, xmxValue, dataDirPath, extraServerOpts)
 	envVars = append(envVars, node.Spec.Env...)
+
+	// The operator owns this variable, so a stale copy in the node env is
+	// dropped instead of letting two conflicting entries reach the container.
+	envVars = slices.DeleteFunc(envVars, func(env v12.EnvVar) bool {
+		return env.Name == "TEAMCITY_STOP_WAIT_TIME"
+	})
+	envVars = append(envVars, v12.EnvVar{
+		Name:  "TEAMCITY_STOP_WAIT_TIME",
+		Value: fmt.Sprintf("%d", instance.StopWaitTime()),
+	})
 	if instance.DatabaseSecretProvided() {
 		databaseEnvVars := DatabaseEnvVarBuilder(instance.Spec.DatabaseSecret.Secret)
 		envVars = append(envVars, databaseEnvVars...)
