@@ -3,7 +3,6 @@ package resource
 import (
 	"fmt"
 	. "git.jetbrains.team/tch/teamcity-operator/api/v1beta1"
-	"golang.org/x/exp/slices"
 	v1 "k8s.io/api/apps/v1"
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -286,11 +285,8 @@ func BuildEnvVariablesFromGlobalAndNodeSpecificSettings(instance *TeamCity, node
 	envVars := DefaultEnvironmentVariableBuilder(node.Name, xmxValue, dataDirPath, extraServerOpts)
 	envVars = append(envVars, node.Spec.Env...)
 
-	// The operator owns this variable, so a stale copy in the node env is
-	// dropped instead of letting two conflicting entries reach the container.
-	envVars = slices.DeleteFunc(envVars, func(env v12.EnvVar) bool {
-		return env.Name == "TEAMCITY_STOP_WAIT_TIME"
-	})
+	// The operator appends this after the node env, so a copy in the node
+	// env loses by last-definition-wins and the field value applies.
 	envVars = append(envVars, v12.EnvVar{
 		Name:  "TEAMCITY_STOP_WAIT_TIME",
 		Value: fmt.Sprintf("%d", instance.StopWaitTime()),
