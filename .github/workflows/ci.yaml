@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install ginkgo
+        run: go install github.com/onsi/ginkgo/v2/ginkgo
+
+      - name: Run tests
+        run: make test
+
+      - name: Check for uncommitted changes
+        run: |
+          make helm
+          if ! git diff --exit-code; then
+            echo "::error::'make helm' produced changes that are not committed."
+            git --no-pager diff
+            exit 1
+          fi
