@@ -29,10 +29,10 @@ Install the chart from GHCR:
 ```shell
 helm upgrade --install teamcity-operator \
   -n teamcity-operator --create-namespace \
-  oci://ghcr.io/OWNER/charts/teamcity-operator --version <version>
+  oci://ghcr.io/felipecrs/teamcity-operator/chart/teamcity-operator --version <version>
 ```
 
-Replace `OWNER` with the fork owner (e.g. `felipecrs`) and `<version>` with the desired chart version (e.g. `0.0.25`).
+Replace `<version>` with the desired chart version (e.g. `0.0.25`).
 
 #### Install from source
 

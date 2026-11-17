@@ -76,7 +76,7 @@ jobs:
 
       - name: Push chart to GHCR
         run: |
-          helm push teamcity-operator-"$VERSION".tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+          helm push teamcity-operator-"$VERSION".tgz oci://ghcr.io/${{ github.repository }}/chart
 
       - name: Create release with notes and attach Helm package
         uses: softprops/action-gh-release@v2
