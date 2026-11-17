@@ -3,11 +3,18 @@ name: CI
 on:
   pull_request:
   push:
-    branches:
-      - main
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,11 +31,54 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Check for uncommitted changes
+      - name: Check chart drift
         run: |
           make helm
           if ! git diff --exit-code; then
-            echo "::error::'make helm' produced changes that are not committed."
+            echo "::error::The generated chart differs from the committed one."
             git --no-pager diff
             exit 1
           fi
+
+      - name: Set version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+              echo "::error::Tag '$GITHUB_REF_NAME' is not valid semver."
+              exit 1
+            fi
+          else
+            VERSION="0.0.0-$(git rev-parse --short HEAD)"
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ env.IMAGE }}:${{ env.VERSION }}
+
+      - name: Package and push chart
+        env:
+          IMG: ${{ env.IMAGE }}:${{ env.VERSION }}
+        run: |
+          make helm
+          helm package ./charts/teamcity-operator --version "$VERSION" --app-version "$VERSION"
+          helm push teamcity-operator-"$VERSION".tgz oci://ghcr.io/${{ github.repository }}/chart
