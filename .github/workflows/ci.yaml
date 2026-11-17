@@ -34,9 +34,9 @@ jobs:
       - name: Check chart drift
         run: |
           make helm
-          if ! git diff --exit-code; then
+          if ! git diff --exit-code -- charts config; then
             echo "::error::The generated chart differs from the committed one."
-            git --no-pager diff
+            git --no-pager diff -- charts config
             exit 1
           fi
 
