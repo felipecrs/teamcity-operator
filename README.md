@@ -29,7 +29,7 @@ Install the chart from GHCR:
 ```shell
 helm upgrade --install teamcity-operator \
   -n teamcity-operator --create-namespace \
-  oci://ghcr.io/felipecrs/teamcity-operator/chart/teamcity-operator --version <version>
+  oci://ghcr.io/felipecrs/charts/teamcity-operator --version <version>
 ```
 
 Replace `<version>` with the desired chart version (e.g. `0.0.25`).
