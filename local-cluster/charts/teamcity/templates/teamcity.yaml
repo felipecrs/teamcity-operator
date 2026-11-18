@@ -25,17 +25,20 @@ spec:
     {{ $name }}: {{ $value | quote }}
     {{- end }}
   {{- end }}
+  xmxPercentage: {{ .Values.xmxPercentage }}
   dataDirVolumeClaim:
     name: {{ .Release.Name }}-data-dir
     volumeMount:
       name: data-dir
       mountPath: /storage
     spec:
-      # Shared by all the nodes, so it needs ReadWriteMany on a multi-node cluster.
-      accessModes: [ReadWriteOnce]
+      accessModes: [ReadWriteMany]
+      {{- with .Values.dataDir.storageClassName }}
+      storageClassName: {{ . }}
+      {{- end }}
       resources:
         requests:
-          storage: {{ .Values.dataDirSize }}
+          storage: {{ .Values.dataDir.size }}
   mainNode:
     name: {{ .Values.mainNode.name }}
     spec:

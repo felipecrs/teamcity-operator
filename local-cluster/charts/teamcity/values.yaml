@@ -8,7 +8,14 @@ database:
 # Passed to every node as -D options.
 startupProperties: {}
 
-dataDirSize: 5Gi
+# Shared by all the nodes, so its storage class must support ReadWriteMany.
+dataDir:
+  storageClassName: ""
+  size: 5Gi
+
+# The share of each node's memory request for the JVM heap. The operator's
+# default of 95 leaves no room for the rest of the JVM.
+xmxPercentage: 50
 
 # spec takes the operator's NodeSpec fields.
 mainNode:

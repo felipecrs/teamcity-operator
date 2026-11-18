@@ -12,6 +12,9 @@ TEAMCITY_URL = 'http://' + TEAMCITY_HOST
 
 # Cold starts (image pulls, cert-manager webhooks) outlast the 30s default.
 update_settings(k8s_upsert_timeout_secs=900)
+# The secrets are fixed local values, and the database password "teamcity"
+# would otherwise be redacted from every resource name in the logs.
+secret_settings(disable_scrub=True)
 
 load('ext://helm_resource', 'helm_resource')
 load('ext://configmap', 'configmap_create')
@@ -62,6 +65,25 @@ helm_resource(
     labels=['database'],
 )
 
+# ReadWriteMany volumes over NFS, for the data directory the TeamCity nodes share.
+k8s_yaml('manifests/nfs-server.yaml')
+k8s_resource('nfs-server', objects=['nfs:namespace'], labels=['cluster'])
+
+helm_resource(
+    'csi-driver-nfs',
+    chart='csi-driver-nfs',
+    namespace='kube-system',
+    flags=[
+        '--repo', 'https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts',
+        '--version', '4.13.6',
+        '-f', 'values/csi-driver-nfs.yaml',
+    ],
+    deps=['values/csi-driver-nfs.yaml'],
+    resource_deps=['nfs-server'],
+    pod_readiness='wait',
+    labels=['cluster'],
+)
+
 k8s_yaml('manifests/database-credentials.yaml')
 k8s_resource(
     new_name='database-credentials',
@@ -99,7 +121,7 @@ helm_resource(
     namespace='teamcity',
     flags=['-f', 'values/teamcity.yaml', '--set', 'ingress.host=' + TEAMCITY_HOST],
     deps=['charts/teamcity', 'values/teamcity.yaml'],
-    resource_deps=['teamcity-operator', 'teamcity-database', 'traefik'],
+    resource_deps=['teamcity-operator', 'teamcity-database', 'traefik', 'csi-driver-nfs'],
     pod_readiness='wait',
     labels=['teamcity'],
     # The proxy and the nodes all listen on 8111, so the port forward works

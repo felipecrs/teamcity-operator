@@ -34,13 +34,13 @@ project {
 object Examples : Project({
     name = "Examples"
 
-    // Run every build each time, instead of reusing ones at the same revision.
-    sequential({ reuseBuilds = ReuseBuilds.NO }) {
+    // Rerun every build each time, instead of reusing those at the same revision.
+    sequential {
         buildType(Build)
-        parallel {
+        parallel({ reuseBuilds = ReuseBuilds.NO }) {
             (1..3).forEach { buildType(Test(it)) }
         }
-        buildType(Release)
+        buildType(Release) { reuseBuilds = ReuseBuilds.NO }
     }.buildTypes().forEach { buildType(it) }
 })
 
