@@ -1,0 +1,33 @@
+# What TeamCity needs to run agents from the templates in this namespace, see
+# https://www.jetbrains.com/help/teamcity/setting-up-teamcity-for-kubernetes.html
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "teamcity-agents.fullname" . }}
+  labels:
+    {{- include "teamcity-agents.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, create, delete]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "teamcity-agents.fullname" . }}
+  labels:
+    {{- include "teamcity-agents.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "teamcity-agents.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "teamcity-agents.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}

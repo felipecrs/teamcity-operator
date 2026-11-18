@@ -1,0 +1,83 @@
+# Default values for teamcity.
+# The chart renders a TeamCity resource, so the TeamCity operator and its CRD
+# must be installed first. The operator runs each node as a StatefulSet.
+
+image:
+  repository: jetbrains/teamcity-server
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+# The operator creates this service account and runs every node with it.
+serviceAccount:
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set, a name is generated using the fullname template
+  name: ""
+
+database:
+  # An existing Secret with the database.properties entries: connectionUrl,
+  # connectionProperties.user and connectionProperties.password.
+  existingSecret: ""
+  # Otherwise the chart creates that Secret from these.
+  connectionUrl: ""
+  user: ""
+  password: ""
+
+# TeamCity startup properties, passed to every node as -D options.
+startupProperties: {}
+
+# Share of the container memory given to the JVM heap.
+xmxPercentage: 50
+
+# The data directory, shared by all the nodes: it needs ReadWriteMany unless
+# every node runs on the same Kubernetes node.
+dataDir:
+  accessModes:
+    - ReadWriteOnce
+  size: 5Gi
+  storageClassName: ""
+
+# Each node takes the fields of the operator's NodeSpec in `spec`
+# (requests, responsibilities, nodeSelector, tolerations, ...).
+mainNode:
+  name: main-node
+  spec:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+
+# Secondary nodes start once the main node is ready: one connecting while the
+# main node takes its database lock stops at "Second TeamCity instance
+# detected" until an administrator intervenes.
+secondaryNodes: []
+  # - name: secondary-node-1
+  #   spec:
+  #     requests:
+  #       cpu: 500m
+  #       memory: 1Gi
+  #     responsibilities:
+  #       - CAN_PROCESS_BUILD_MESSAGES
+
+service:
+  type: ClusterIP
+  port: 8111
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local

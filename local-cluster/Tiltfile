@@ -1,0 +1,206 @@
+# Local multi-node TeamCity simulation, driven by Tilt on a vind cluster
+# (vCluster in Docker). Start it with ./up.sh, which creates the cluster and
+# then runs tilt up; tear it down with ./down.sh.
+#
+# TeamCity: http://teamcity.<machine IP>.nip.io, linked from the Tilt UI.
+#
+# Resource graph:
+#
+#   cert-manager ───────────── teamcity-operator ──┐
+#   traefik ───────────────────────────────────────┤
+#   percona-postgresql-operator ─┐                 ├─ teamcity ──┐
+#   database-credentials ─── teamcity-database ────┘             ├─ teamcity-configuration
+#   teamcity-agents ─────────────────────────────────────────────┤
+#   teamcity-settings ───────────────────────────────────────────┘
+#
+# Third-party software comes from Helm charts (preferring OCI registries),
+# TeamCity and its agents from the charts in charts/.
+
+CLUSTER_NAME = os.getenv('CLUSTER_NAME', 'teamcity')
+allow_k8s_contexts('vcluster-docker_' + CLUSTER_NAME)
+
+# The IP of the default route: reachable from the browser and, through the
+# port 80 that vind publishes, from inside the cluster too. Connecting a UDP
+# socket sends nothing, it only picks the source address.
+MACHINE_IP = str(local(
+    "python3 -c 'import socket; s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect((\"1.1.1.1\", 80)); print(s.getsockname()[0])'",
+    quiet=True,
+)).strip()
+TEAMCITY_HOST = 'teamcity.%s.nip.io' % MACHINE_IP
+TEAMCITY_URL = 'http://' + TEAMCITY_HOST
+
+# Cold-start chores (image pulls, first-time cert-manager webhook bootstraps)
+# regularly take longer than the default 30s apply timeout.
+update_settings(k8s_upsert_timeout_secs=900)
+
+load('ext://helm_resource', 'helm_resource')
+load('ext://configmap', 'configmap_create')
+load('ext://uibutton', 'cmd_button')
+
+# Calls the TeamCity REST API on the main node, as the super user.
+def teamcity_rest(method, path, body='{}'):
+    return [
+        'kubectl', '--namespace', 'teamcity', 'exec', 'main-node-0', '--',
+        'curl', '-sSf', '-u', ':super', '-H', 'Content-Type: application/json',
+        '-X', method, '-d', body, 'localhost:8111/httpAuth/app/rest/' + path,
+    ]
+
+# The operator image is built into the host Docker daemon with a content-based
+# tag. vind's pull-through registry proxy lets the cluster pull it straight
+# from there, so no push step is needed.
+custom_build(
+    'teamcity-operator',
+    'docker build -t $EXPECTED_REF ..',
+    deps=['../Dockerfile', '../go.mod', '../go.sum', '../cmd', '../internal', '../api'],
+    disable_push=True,
+)
+
+# cert-manager renders the webhook certificates used by the operator chart.
+helm_resource(
+    'cert-manager',
+    chart='oci://quay.io/jetstack/charts/cert-manager',
+    namespace='cert-manager',
+    flags=['--create-namespace', '--version', 'v1.17.2', '-f', 'values/cert-manager.yaml'],
+    deps=['values/cert-manager.yaml'],
+    labels=['cluster'],
+    pod_readiness='wait',
+)
+
+helm_resource(
+    'traefik',
+    chart='oci://ghcr.io/traefik/helm/traefik',
+    namespace='traefik',
+    flags=['--create-namespace', '--version', '42.4.1', '-f', 'values/traefik.yaml'],
+    deps=['values/traefik.yaml'],
+    labels=['cluster'],
+    pod_readiness='wait',
+)
+
+# The Percona PostgreSQL operator runs the database cluster below.
+helm_resource(
+    'percona-postgresql-operator',
+    chart='oci://ghcr.io/percona/percona-helm-charts/pg-operator',
+    namespace='percona-postgresql-operator',
+    flags=['--create-namespace', '--version', '3.1.0', '-f', 'values/pg-operator.yaml'],
+    deps=['values/pg-operator.yaml'],
+    labels=['database'],
+    pod_readiness='wait',
+)
+
+# The teamcity namespace and the password of its Postgres role.
+k8s_yaml('manifests/database-credentials.yaml')
+k8s_resource(
+    new_name='database-credentials',
+    objects=['teamcity:namespace', 'teamcity-pg-credentials:secret'],
+    labels=['database'],
+)
+
+# TeamCity retries until the database accepts connections, so it only waits
+# for the database pods.
+helm_resource(
+    'teamcity-database',
+    chart='oci://ghcr.io/percona/percona-helm-charts/pg-db',
+    namespace='teamcity',
+    flags=['--version', '3.1.0', '-f', 'values/pg-db.yaml'],
+    deps=['values/pg-db.yaml'],
+    resource_deps=['percona-postgresql-operator', 'database-credentials'],
+    pod_readiness='wait',
+    labels=['database'],
+)
+
+helm_resource(
+    'teamcity-operator',
+    chart='../charts/teamcity-operator',
+    namespace='teamcity-operator',
+    flags=['--create-namespace'],
+    deps=['../charts/teamcity-operator'],
+    image_deps=['teamcity-operator'],
+    image_keys=[
+        ('controllerManager.manager.image.repository', 'controllerManager.manager.image.tag'),
+    ],
+    resource_deps=['cert-manager'],
+    pod_readiness='wait',
+    labels=['operator'],
+)
+
+helm_resource(
+    'teamcity',
+    chart='charts/teamcity',
+    namespace='teamcity',
+    flags=[
+        '-f', 'values/teamcity.yaml',
+        '--set-json', 'ingress.hosts=' + encode_json([{'host': TEAMCITY_HOST, 'paths': [{'path': '/', 'pathType': 'Prefix'}]}]),
+    ],
+    deps=['charts/teamcity', 'values/teamcity.yaml'],
+    resource_deps=['teamcity-operator', 'teamcity-database', 'traefik'],
+    pod_readiness='wait',
+    labels=['teamcity'],
+    # Both open the super user login, which takes the token 'super'
+    # (values/teamcity.yaml). The port forward works even when the machine IP
+    # or host port 80 does not.
+    links=[link(TEAMCITY_URL + '/login.html?super=1', 'TeamCity')],
+    port_forwards=[port_forward(8111, 8111, 'TeamCity (localhost)', link_path='/login.html?super=1')],
+)
+cmd_button(
+    'teamcity:run-pipeline',
+    resource='teamcity',
+    argv=teamcity_rest('POST', 'buildQueue', '{"buildType": {"id": "Examples_Release"}}'),
+    text='Run example pipeline',
+    icon_name='play_arrow',
+)
+cmd_button(
+    'teamcity:helm-test',
+    resource='teamcity',
+    argv=['helm', 'test', 'teamcity', '--namespace', 'teamcity', '--logs'],
+    text='Run helm test',
+    icon_name='fact_check',
+)
+
+# Agent pod templates, which the Kubernetes cloud profile in the DSL uses.
+helm_resource(
+    'teamcity-agents',
+    chart='charts/teamcity-agents',
+    namespace='teamcity-agents',
+    flags=['--create-namespace'],
+    deps=['charts/teamcity-agents'],
+    pod_readiness='ignore',
+    labels=['teamcity'],
+)
+# Shows the agent pods TeamCity starts from those templates, with their logs.
+k8s_resource('teamcity-agents', extra_pod_selectors=[{'app.kubernetes.io/instance': 'teamcity-agents'}])
+
+# The Kotlin DSL in .teamcity, served to TeamCity by a small git server. Edits
+# update the ConfigMap, which the server commits.
+configmap_create(
+    'teamcity-settings',
+    namespace='teamcity',
+    from_file=['.teamcity/settings.kts', '.teamcity/pom.xml'],
+)
+k8s_yaml('manifests/settings-repository.yaml')
+k8s_resource(
+    'teamcity-settings',
+    objects=['teamcity-settings:configmap'],
+    resource_deps=['database-credentials'],
+    labels=['teamcity'],
+    links=[link(TEAMCITY_URL + '/admin/editProject.html?projectId=_Root&tab=versionedSettings', 'Versioned settings')],
+)
+# TeamCity stops applying the DSL after a failed import until told to load it.
+cmd_button(
+    'teamcity-settings:load',
+    resource='teamcity-settings',
+    argv=teamcity_rest('POST', 'projects/_Root/versionedSettings/loadSettings'),
+    text='Load settings from VCS',
+    icon_name='sync',
+)
+
+# Points TeamCity at its server URL and the DSL. The URL depends on the
+# machine IP, so it gets injected here, which also reruns the Job if it changes.
+configuration = read_yaml_stream('manifests/teamcity-configuration.yaml')
+for container in configuration[0]['spec']['template']['spec']['containers']:
+    container['env'] = [{'name': 'TEAMCITY_URL', 'value': TEAMCITY_URL}]
+k8s_yaml(encode_yaml_stream(configuration))
+k8s_resource(
+    'teamcity-configuration',
+    resource_deps=['teamcity', 'teamcity-agents', 'teamcity-settings'],
+    labels=['teamcity'],
+)

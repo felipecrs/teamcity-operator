@@ -1,0 +1,50 @@
+# Default values for teamcity-agents.
+
+# Each agent becomes a Deployment scaled to zero, named <fullname>-<key>. A
+# TeamCity Kubernetes cloud image of type "Use pod template from deployment"
+# starts agent pods from it and injects the server URL and agent name itself.
+agents:
+  minimal:
+    image:
+      repository: jetbrains/teamcity-minimal-agent
+      pullPolicy: IfNotPresent
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: ""
+    resources: {}
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# The account TeamCity authenticates as to start and stop agent pods in the
+# release namespace. The chart creates a long-lived token for it in the
+# <name>-token Secret, for the cloud profile's "Token" authentication.
+serviceAccount:
+  # Specifies whether a service account (and its token) should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# The settings below apply to the pods of every agent.
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

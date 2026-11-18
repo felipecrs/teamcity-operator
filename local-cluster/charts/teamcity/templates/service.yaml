@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "teamcity.fullname" . }}
+  labels:
+    {{- include "teamcity.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8111
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "teamcity.selectorLabels" . | nindent 4 }}
+{{- /*
+The operator sets the root URL of each node to http://<pod>.<namespace>, which
+TeamCity uses between nodes and to hand agents over to them. These Services
+make those URLs resolve.
+*/}}
+{{- range prepend .Values.secondaryNodes .Values.mainNode }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}-0
+  labels:
+    {{- include "teamcity.labels" $ | nindent 4 }}
+spec:
+  ports:
+    - port: 80
+      targetPort: 8111
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "teamcity.selectorLabels" $ | nindent 4 }}
+    statefulset.kubernetes.io/pod-name: {{ .name }}-0
+{{- end }}

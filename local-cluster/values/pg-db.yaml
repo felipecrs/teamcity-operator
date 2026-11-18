@@ -19,7 +19,7 @@ backups:
 logcollector:
   enabled: false
 # The operator creates the role from the secret holding only the 'password'
-# key (prerequisite-secrets.yaml) and enriches it with connection details.
+# key (manifests/database-credentials.yaml) and enriches it with connection details.
 # The role must not be SUPERUSER: pgBouncer's auth lookup refuses to
 # authenticate superusers.
 users:

@@ -1,0 +1,16 @@
+# vind (vCluster in Docker) values for the local simulation environment.
+#
+# vind runs Kubernetes as plain Docker containers. A single node is enough: the
+# "multi-node" part is TeamCity's own server nodes, which are just pods. Its
+# pull-through registry proxy (enabled by default) lets pods pull images
+# straight from the host Docker daemon, so locally built images work without
+# pushing them anywhere.
+#
+# vind's LoadBalancer IPs live on the Docker network, which browsers outside
+# the Docker host (Windows with WSL, macOS) cannot reach. Instead the node
+# publishes host port 80 to Traefik's NodePort, so TeamCity is reachable on the
+# machine's IP from the browser and from inside the cluster alike.
+experimental:
+  docker:
+    ports:
+      - "80:30080"

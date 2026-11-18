@@ -1,0 +1,66 @@
+# A git server for the Kotlin DSL in local-cluster/.teamcity: TeamCity loads
+# versioned settings only from a VCS. Tilt keeps the teamcity-settings
+# ConfigMap in sync with that directory, and the kubelet refreshes the mounted
+# copy, which gets committed here. TeamCity reads it from
+# git://teamcity-settings/settings (branch main).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity-settings
+  namespace: teamcity
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: teamcity-settings
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: teamcity-settings
+    spec:
+      containers:
+        - name: git
+          # Any image with git daemon works: this one is already pulled for
+          # TeamCity itself.
+          image: jetbrains/teamcity-server:2026.2.2
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              git init -q -b main /srv/settings
+              cd /srv/settings
+              while true; do
+                rm -rf .teamcity && mkdir .teamcity && cp -L /settings/* .teamcity/
+                git add -A
+                git diff --cached --quiet ||
+                  git -c user.name=tilt -c user.email=tilt@localhost commit -q -m 'Sync local-cluster/.teamcity'
+                sleep 5
+              done &
+              exec git daemon --export-all --base-path=/srv --reuseaddr
+          ports:
+            - name: git
+              containerPort: 9418
+          volumeMounts:
+            - name: settings
+              mountPath: /settings
+            - name: repository
+              mountPath: /srv
+      volumes:
+        - name: settings
+          configMap:
+            name: teamcity-settings
+        - name: repository
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teamcity-settings
+  namespace: teamcity
+spec:
+  selector:
+    app.kubernetes.io/name: teamcity-settings
+  ports:
+    - name: git
+      port: 9418
+      targetPort: git

@@ -108,24 +108,21 @@ make deploy # installs controller to the selected kube context
 
 ## Local cluster simulation
 
-The repository ships a local environment for trying out the operator and simulating a multi-node TeamCity, driven by [Tilt](https://tilt.dev) on a [vind](https://github.com/loft-sh/vind) cluster (vCluster in Docker).
-
-First create the cluster and the kubeconfig Tilt will use:
+The `local-cluster` directory holds a local environment for trying out the operator and simulating a multi-node TeamCity, driven by [Tilt](https://tilt.dev) on a [vind](https://github.com/loft-sh/vind) cluster (vCluster in Docker). Start it with (the first run takes several minutes):
 
 ```shell
-scripts/local-cluster.sh
+local-cluster/up.sh
 ```
 
-Then start everything (the first run takes several minutes):
+It creates the cluster (or resumes it), adds it to your kubeconfig as the current context, and runs `tilt up`, which:
 
-```shell
-KUBECONFIG=.tilt-kubeconfig tilt up
-```
+- builds the operator image from the current source tree (pods pull it straight from the host Docker daemon, no registry needed) and deploys it from the chart in this repository;
+- installs cert-manager, Traefik and the Percona PostgreSQL operator from OCI Helm charts, and creates a two-instance Postgres cluster with a PgBouncer pool;
+- deploys a three-node TeamCity with the `local-cluster/charts/teamcity` chart, and build agent pod templates with the `local-cluster/charts/teamcity-agents` chart;
+- loads the Kotlin DSL in `local-cluster/.teamcity` as the versioned settings of the Root project: a Kubernetes cloud profile that starts agents as pods, and an example pipeline in the Examples project. Edit it there, TeamCity picks the changes up within a minute or so.
 
-Tilt builds the operator image from the current source tree (pods pull it straight from the host Docker daemon, no registry setup needed), installs cert-manager, Traefik and the Percona PostgreSQL operator from OCI Helm charts, creates a two-instance Postgres cluster with a PgBouncer pool, deploys the operator from the chart in this repository, and creates a multi-node TeamCity instance backed by the database.
+TeamCity is reachable at `http://teamcity.<machine IP>.nip.io`, linked from the `teamcity` resource in the Tilt UI, which opens the super user login: the token is `super`. The cluster publishes Traefik on host port 80, so that port must be free; Tilt also forwards `http://localhost:8111`. Buttons in the Tilt UI run the example pipeline, reload the Kotlin DSL when TeamCity stopped applying it, and run `helm test`.
 
-TeamCity is reachable at `http://teamcity.local:8111` (add `127.0.0.1 teamcity.local` to `/etc/hosts` if the domain does not resolve). On first boot, the TeamCity license has to be accepted in the UI before the server finishes starting.
+Tilt watches the source tree: changing the Go code or the charts rebuilds and redeploys automatically.
 
-Tilt watches the source tree: changing the Go code or the chart rebuilds and redeploys automatically. When the cluster's images fail to pull on Linux with `too many open files`, raise the inotify limit used by containerd (for example `colima ssh -- sudo sysctl -w fs.inotify.max_user_instances=1024`).
-
-Teardown: `tilt down` stops Tilt, and `scripts/local-cluster.sh --delete` removes the cluster.
+Teardown: `local-cluster/down.sh` deletes the cluster.

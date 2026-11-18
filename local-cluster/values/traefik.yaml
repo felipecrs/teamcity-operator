@@ -1,0 +1,9 @@
+# Traefik is published through the NodePort that vind maps on the node
+# (80 -> 30080). The chart creates the default IngressClass, so the TeamCity
+# Ingress needs no explicit ingressClassName.
+service:
+  spec:
+    type: NodePort
+ports:
+  web:
+    nodePort: 30080

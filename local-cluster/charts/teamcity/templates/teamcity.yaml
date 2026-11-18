@@ -1,0 +1,64 @@
+apiVersion: jetbrains.com/v1beta1
+kind: TeamCity
+metadata:
+  name: {{ include "teamcity.fullname" . }}
+  labels:
+    {{- include "teamcity.selectorLabels" . | nindent 4 }}
+  # The operator removes it once the nodes are gone.
+  finalizers:
+    - teamcity.jetbrains.com/finalizer
+spec:
+  image: {{ include "teamcity.image" . }}
+  serviceAccount:
+    name: {{ include "teamcity.serviceAccountName" . }}
+    {{- with .Values.serviceAccount.annotations }}
+    annotations:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  databaseSecret:
+    secret: {{ .Values.database.existingSecret | default (printf "%s-database" (include "teamcity.fullname" .)) }}
+  {{- with .Values.startupProperties }}
+  startupPropertiesConfig:
+    {{- range $name, $value := . }}
+    {{ $name }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  xmxPercentage: {{ .Values.xmxPercentage }}
+  dataDirVolumeClaim:
+    name: {{ include "teamcity.fullname" . }}-data-dir
+    volumeMount:
+      name: data-dir
+      mountPath: /storage
+    spec:
+      accessModes:
+        {{- toYaml .Values.dataDir.accessModes | nindent 8 }}
+      {{- with .Values.dataDir.storageClassName }}
+      storageClassName: {{ . }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.dataDir.size }}
+  mainNode:
+    name: {{ .Values.mainNode.name }}
+    spec:
+      {{- toYaml .Values.mainNode.spec | nindent 6 }}
+  {{- with .Values.secondaryNodes }}
+  secondaryNodes:
+    {{- range . }}
+    - name: {{ .name }}
+      spec:
+        {{- with omit .spec "initContainers" }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        initContainers:
+          - name: wait-for-main-node
+            image: {{ include "teamcity.image" $ }}
+            command:
+              - sh
+              - -c
+              - until curl -sf -o /dev/null http://{{ $.Values.mainNode.name }}-0/healthCheck/ready; do sleep 5; done
+          {{- with .spec.initContainers }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+    {{- end }}
+  {{- end }}
