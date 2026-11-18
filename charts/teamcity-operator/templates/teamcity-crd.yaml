@@ -6069,7 +6069,7 @@ spec:
                 type: array
               readinessEndpoint:
                 default:
-                  path: /healthCheck/healthy
+                  path: /healthCheck/ready
                   port: 8111
                   scheme: HTTP
                 description: HTTPGetAction describes an action based on HTTP Get requests.

@@ -176,9 +176,9 @@ var _ = Describe("StatefulSet", func() {
 	Context("TeamCity with default probe endpoints", func() {
 		BeforeEach(func() {
 			BeforeEachBuild(func(teamcity *TeamCity) {
-				// Set the default readiness endpoint (as defined in kubebuilder defaults)
+				// Set the default endpoints (as defined in kubebuilder defaults)
 				teamcity.Spec.ReadinessEndpoint = v12.HTTPGetAction{
-					Path:   "/healthCheck/healthy",
+					Path:   "/healthCheck/ready",
 					Scheme: v12.URISchemeHTTP,
 					Port:   intstr.FromInt32(8111),
 				}
@@ -189,7 +189,7 @@ var _ = Describe("StatefulSet", func() {
 				}
 			})
 		})
-		It("sets liveness probe with readiness endpoint path", func() {
+		It("sets liveness probe with health endpoint path", func() {
 			obj, err := DefaultStatefulSetBuilder.BuildObjectList()
 			Expect(err).NotTo(HaveOccurred())
 			stsObject := obj[0]
@@ -212,7 +212,7 @@ var _ = Describe("StatefulSet", func() {
 
 			readinessProbe := statefulSet.Spec.Template.Spec.Containers[0].ReadinessProbe
 			Expect(readinessProbe.HTTPGet).NotTo(BeNil())
-			Expect(readinessProbe.HTTPGet.Path).To(Equal("/healthCheck/healthy"))
+			Expect(readinessProbe.HTTPGet.Path).To(Equal("/healthCheck/ready"))
 			Expect(readinessProbe.HTTPGet.Port.IntVal).To(Equal(int32(8111)))
 		})
 		It("sets startup probe with health endpoint path", func() {
