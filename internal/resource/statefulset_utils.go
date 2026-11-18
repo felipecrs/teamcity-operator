@@ -200,7 +200,7 @@ func ConfigureContainer(instance *TeamCity, node Node, container *v12.Container)
 	container.Resources.Requests = node.Spec.Requests
 
 	container.Ports = []v12.ContainerPort{instance.Spec.TeamCityServerPort}
-	container.LivenessProbe.ProbeHandler.HTTPGet = &instance.Spec.ReadinessEndpoint
+	container.LivenessProbe.ProbeHandler.HTTPGet = &instance.Spec.HealthEndpoint
 	container.ReadinessProbe.ProbeHandler.HTTPGet = &instance.Spec.ReadinessEndpoint
 	container.StartupProbe.ProbeHandler.HTTPGet = &instance.Spec.HealthEndpoint
 	volumeMounts := BuildVolumeMountsFromPersistentVolumeClaims(instance.GetAllCustomPersistentVolumeClaim())
