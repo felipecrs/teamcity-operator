@@ -50,6 +50,8 @@ jobs:
         run: make test
 
       - name: Check chart drift
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           make helm
           if ! git diff --exit-code -- charts config; then
