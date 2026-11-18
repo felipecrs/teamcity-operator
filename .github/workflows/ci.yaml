@@ -58,17 +58,8 @@ jobs:
             exit 1
           fi
 
-  token:
-    runs-on: ubuntu-latest
-    outputs:
-      token: ${{ steps.token.outputs.token }}
-    steps:
-      - name: Expose the GitHub token
-        id: token
-        run: echo "token=${{ github.token }}" >> "$GITHUB_OUTPUT"
-
   build:
-    needs: [version, token]
+    needs: version
     uses: docker/github-builder/.github/workflows/build.yml@v1
     permissions:
       contents: read
@@ -86,7 +77,7 @@ jobs:
       registry-auths: |
         - registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ needs.token.outputs.token }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
   chart:
     needs: [version, build]
