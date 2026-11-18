@@ -71,7 +71,7 @@ jobs:
       platforms: linux/amd64,linux/arm64
       cache: true
       cache-mode: max
-      meta-images: ${{ github.repository }}
+      meta-images: ghcr.io/${{ github.repository }}
       meta-tags: ${{ format('type=raw,value={0}', needs.version.outputs.version) }}
     secrets:
       registry-auths: |
