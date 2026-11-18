@@ -1,15 +1,14 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ include "teamcity.fullname" . }}-test-connection"
+  name: {{ .Release.Name }}-test-connection
   labels:
     {{- include "teamcity.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": test
+    helm.sh/hook: test
 spec:
   containers:
     - name: wget
       image: busybox:1.37
-      command: ['wget']
-      args: ['{{ include "teamcity.fullname" . }}:{{ .Values.service.port }}/healthCheck/ready']
+      command: [wget, -O-, http://{{ .Release.Name }}/healthCheck/ready]
   restartPolicy: Never

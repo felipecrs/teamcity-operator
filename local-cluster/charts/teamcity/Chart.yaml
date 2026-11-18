@@ -1,6 +1,4 @@
 apiVersion: v2
 name: teamcity
-description: A multi-node TeamCity server, run by the TeamCity operator
-type: application
+description: A multi-node TeamCity server run by the TeamCity operator, behind HAProxy
 version: 0.1.0
-appVersion: "2026.2.2"

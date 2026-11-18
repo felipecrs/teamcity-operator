@@ -1,0 +1,45 @@
+{{- $config := tpl (.Files.Get "files/haproxy.cfg") . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-proxy
+  labels:
+    {{- include "teamcity.labels" . | nindent 4 }}
+data:
+  haproxy.cfg: |
+    {{- $config | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-proxy
+  labels:
+    {{- include "teamcity.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "teamcity.proxyLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "teamcity.proxyLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ $config | sha256sum }}
+    spec:
+      containers:
+        - name: haproxy
+          image: {{ .Values.proxy.image }}
+          ports:
+            - name: http
+              containerPort: 8111
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          volumeMounts:
+            - name: config
+              mountPath: /usr/local/etc/haproxy
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-proxy

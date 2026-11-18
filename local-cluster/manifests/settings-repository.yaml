@@ -1,8 +1,6 @@
-# A git server for the Kotlin DSL in local-cluster/.teamcity: TeamCity loads
-# versioned settings only from a VCS. Tilt keeps the teamcity-settings
-# ConfigMap in sync with that directory, and the kubelet refreshes the mounted
-# copy, which gets committed here. TeamCity reads it from
-# git://teamcity-settings/settings (branch main).
+# Serves the Kotlin DSL in .teamcity as git://teamcity-settings/settings, since
+# TeamCity loads versioned settings only from a VCS. It commits whatever the
+# teamcity-settings ConfigMap, kept in sync by Tilt, holds.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,29 +9,25 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: teamcity-settings
+      app: teamcity-settings
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: teamcity-settings
+        app: teamcity-settings
     spec:
       containers:
         - name: git
-          # Any image with git daemon works: this one is already pulled for
-          # TeamCity itself.
+          # Has git daemon, and is pulled anyway.
           image: jetbrains/teamcity-server:2026.2.2
           command:
             - sh
             - -c
             - |
-              set -e
-              git init -q -b main /srv/settings
-              cd /srv/settings
+              git init -q -b main /srv/settings && cd /srv/settings
               while true; do
                 rm -rf .teamcity && mkdir .teamcity && cp -L /settings/* .teamcity/
                 git add -A
-                git diff --cached --quiet ||
-                  git -c user.name=tilt -c user.email=tilt@localhost commit -q -m 'Sync local-cluster/.teamcity'
+                git diff --cached --quiet || git -c user.name=tilt -c user.email=tilt@localhost commit -q -m Sync
                 sleep 5
               done &
               exec git daemon --export-all --base-path=/srv --reuseaddr
@@ -59,8 +53,7 @@ metadata:
   namespace: teamcity
 spec:
   selector:
-    app.kubernetes.io/name: teamcity-settings
+    app: teamcity-settings
   ports:
     - name: git
       port: 9418
-      targetPort: git

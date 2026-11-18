@@ -3,63 +3,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "teamcity-agents.fullname" $ }}-{{ $name }}
+  name: {{ $.Release.Name }}-{{ $name }}
   labels:
-    {{- include "teamcity-agents.labels" $ | nindent 4 }}
-    app.kubernetes.io/component: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
 spec:
-  # Only a template: TeamCity creates the agent pods from it. Those pods lack
-  # the pod-template-hash label of the ReplicaSet, which so leaves them alone.
+  # TeamCity creates the agent pods from this template. They lack the
+  # ReplicaSet's pod-template-hash label, so it leaves them alone.
   replicas: 0
   selector:
     matchLabels:
-      {{- include "teamcity-agents.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
       app.kubernetes.io/component: {{ $name }}
   template:
     metadata:
-      {{- with $.Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
-        {{- include "teamcity-agents.labels" $ | nindent 8 }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
         app.kubernetes.io/component: {{ $name }}
-        {{- with $.Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
     spec:
-      {{- with $.Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      # Agents do not use the Kubernetes API.
       automountServiceAccountToken: false
-      {{- with $.Values.podSecurityContext }}
-      securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       containers:
         - name: agent
-          {{- with $.Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          image: "{{ $agent.image.repository }}:{{ $agent.image.tag | default $.Chart.AppVersion }}"
-          imagePullPolicy: {{ $agent.image.pullPolicy }}
-          {{- with $agent.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- with $.Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with $.Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with $.Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+          image: {{ $agent.image }}
 {{- end }}

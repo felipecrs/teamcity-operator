@@ -1,18 +1,13 @@
-# The ingress host is set by the Tiltfile, from the machine IP.
 database:
   connectionUrl: jdbc:postgresql://teamcity-database-pg-pgbouncer:5432/teamcity
   user: teamcity
-  # The database creates the role with it (manifests/database-credentials.yaml).
   password: teamcity
 startupProperties:
   teamcity.startup.maintenance: "false"
-  # Accepts the TeamCity license agreement on first start (stored in the
-  # database), so the server skips the agreement page. Undocumented: read
-  # from LicenseAgreementImpl in TeamCity 2026.2.
+  # Undocumented: read by LicenseAgreementImpl, which then stores the
+  # acceptance in the database.
   teamcity.licenseAgreement.accepted: "true"
   teamcity.firstStart.setupAdmin.enabled: "false"
-  # The super user login linked from the Tilt UI takes this token, and the
-  # teamcity-configuration Job authenticates with it.
   teamcity.superUser.token: super
 mainNode:
   spec:
@@ -38,5 +33,3 @@ secondaryNodes:
         memory: 1Gi
       responsibilities:
         - CAN_PROCESS_BUILD_TRIGGERS
-ingress:
-  enabled: true

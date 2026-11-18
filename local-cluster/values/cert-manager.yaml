@@ -1,3 +1,2 @@
-# cert-manager renders the webhook certificates used by the operator chart.
 crds:
   enabled: true

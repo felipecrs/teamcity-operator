@@ -1,8 +1,7 @@
-# Configures what the Kotlin DSL in local-cluster/.teamcity cannot express:
-# the server URL (TEAMCITY_URL, set by the Tiltfile), the agents token and
-# cluster CA the DSL refers to, and the versioned settings that load the DSL in
-# the first place. It runs next to the teamcity-agents chart to mount its
-# token, and is safe to run again.
+# Configures what the Kotlin DSL cannot: the server URL (TEAMCITY_URL, set by
+# the Tiltfile), the agents token and cluster CA the DSL uses, and the
+# versioned settings that load the DSL. It runs in teamcity-agents to mount
+# the token.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -16,38 +15,30 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: configure
-          # Has curl and is already pulled for TeamCity itself.
           image: jetbrains/teamcity-server:2026.2.2
           command:
             - sh
             - -c
             - |
               set -eu
-              server=http://main-node-0.teamcity
-              # Calls the REST API as the super user (token from values/teamcity.yaml).
               rest() {
                 method=$1 path=$2
                 shift 2
                 curl -sSf -u :super -H Accept:application/json -H Content-Type:application/json \
-                  -X "$method" "$server/httpAuth/app/rest/$path" "$@"
+                  -X "$method" "http://main-node-0.teamcity/httpAuth/app/rest/$path" "$@"
               }
 
-              until curl -sf -o /dev/null "$server/healthCheck/ready"; do sleep 5; done
+              until curl -sf -o /dev/null http://main-node-0.teamcity/healthCheck/ready; do sleep 5; done
 
-              echo "Setting the server URL to $TEAMCITY_URL"
               rest GET server/globalSettings |
                 sed "s|\"rootUrl\":\"[^\"]*\"|\"rootUrl\":\"$TEAMCITY_URL\"|" |
                 rest PUT server/globalSettings --data-binary @- >/dev/null
 
-              echo 'Storing the agents token and the cluster CA for the DSL'
-              # Referenced in the DSL as credentialsJSON:kubernetes-agents-token.
               rest POST projects/_Root/versionedSettings/tokens --data-binary \
                 "{\"versionedSettingsToken\": [{\"name\": \"kubernetes-agents-token\", \"value\": \"$(cat /agents/token)\"}]}" >/dev/null
-              # Read in the DSL with DslContext.getParameter("kubernetesCaCert").
               rest PUT projects/_Root/versionedSettings/contextParameters --data-binary \
                 "{\"versionedSettingsContextParameter\": [{\"name\": \"kubernetesCaCert\", \"value\": \"$(awk '{printf "%s\\n", $0}' /agents/ca.crt)\"}]}" >/dev/null
 
-              echo 'Loading the Root project settings from local-cluster/.teamcity'
               rest GET vcs-roots/id:LocalClusterSettings >/dev/null 2>&1 ||
                 rest POST vcs-roots --data-binary '{
                   "id": "LocalClusterSettings",
@@ -61,7 +52,7 @@ spec:
                     {"name": "authMethod", "value": "ANONYMOUS"}
                   ]}
                 }' >/dev/null
-              # The API refuses to change this configuration once the DSL is in use.
+              # Refused once versioned settings are enabled.
               rest GET projects/_Root/versionedSettings/config | grep -q '"synchronizationMode":"enabled"' ||
                 rest PUT projects/_Root/versionedSettings/config --data-binary '{
                   "synchronizationMode": "enabled",
@@ -71,15 +62,12 @@ spec:
                   "dslExecutionMode": "sandbox",
                   "allowUIEditing": false,
                   "importDecision": "importFromVCS",
-                  "buildSettingsMode": "alwaysUseCurrent",
-                  "showSettingsChanges": true,
-                  "storeSecureValuesOutsideVcs": true
+                  "showSettingsChanges": true
                 }' >/dev/null
               rest GET projects/_Root/versionedSettings/status
           volumeMounts:
             - name: agents-token
               mountPath: /agents
-              readOnly: true
       volumes:
         - name: agents-token
           secret:
