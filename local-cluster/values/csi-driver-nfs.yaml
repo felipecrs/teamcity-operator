@@ -12,3 +12,6 @@ storageClass:
     - soft
     - timeo=30
     - retrans=2
+controller:
+  # No VolumeSnapshot CRDs here, so the snapshotter would only log errors.
+  enableSnapshotter: false
