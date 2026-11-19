@@ -44,6 +44,27 @@ spec:
     spec:
       {{- toYaml .Values.mainNode.spec | nindent 6 }}
       {{- include "teamcity.nodeDataDir" (dict "root" $ "node" .Values.mainNode) | nindent 6 }}
+      # TeamCity retries an unreachable database, but stops at a startup error
+      # when the database rejects its login, as a database still being set up
+      # does.
+      initContainers:
+        - name: wait-for-database
+          image: postgres:18.7-alpine
+          env:
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-database
+                  key: connectionProperties.user
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-database
+                  key: connectionProperties.password
+          command:
+            - sh
+            - -c
+            - until psql {{ trimPrefix "jdbc:" .Values.database.connectionUrl | quote }} -c 'select 1' >/dev/null; do sleep 5; done
   {{- with .Values.secondaryNodes }}
   secondaryNodes:
     {{- range . }}

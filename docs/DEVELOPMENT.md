@@ -108,10 +108,10 @@ make deploy # installs controller to the selected kube context
 
 ## Local cluster simulation
 
-`local-cluster/up.sh` starts a local multi-node TeamCity on a [vind](https://github.com/loft-sh/vind) cluster (vCluster in Docker), driven by [Tilt](https://tilt.dev). It creates or resumes the cluster, makes it your current kube context, and runs `tilt up`, which:
+`local-cluster/up.sh` starts a local multi-node TeamCity on a [k3d](https://k3d.io) cluster, driven by [Tilt](https://tilt.dev). It creates or starts the cluster (configured in `local-cluster/k3d.yaml`), makes it your current kube context, and runs `tilt up`, which:
 
-- builds the operator from the current source tree and deploys it with its chart;
-- installs cert-manager, Traefik, a Percona PostgreSQL database, and an NFS server with csi-driver-nfs for ReadWriteMany volumes;
+- builds the operator from the current source tree, pushes it to the cluster's registry and deploys it with its chart;
+- installs cert-manager, a Percona PostgreSQL database, and an NFS server with csi-driver-nfs for ReadWriteMany volumes (k3s brings Traefik);
 - deploys a three-node TeamCity behind HAProxy, sharing its data directory over NFS and giving each node a local node-specific data directory (`local-cluster/charts/teamcity`), and build agent pod templates (`local-cluster/charts/teamcity-agents`);
 - loads the Kotlin DSL in `local-cluster/.teamcity` as the Root project settings: a Kubernetes cloud profile that starts agents as pods, and an example pipeline. TeamCity picks up edits within a minute or so.
 

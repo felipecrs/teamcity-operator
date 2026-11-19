@@ -1,6 +1,4 @@
-# Run through ./up.sh, which starts the cluster first.
-
-allow_k8s_contexts('vcluster-docker_teamcity')
+# Run through ./up.sh, which starts the k3d cluster first.
 
 # The IP of the default route, reachable from the browser and from the pods.
 MACHINE_IP = str(local(
@@ -27,13 +25,8 @@ def teamcity_rest(method, path, body='{}'):
         '-X', method, '-d', body, 'localhost:8111/httpAuth/app/rest/' + path,
     ]
 
-# vind pulls images from the host Docker daemon, so there is nothing to push.
-custom_build(
-    'teamcity-operator',
-    'docker build -t $EXPECTED_REF ..',
-    deps=['../Dockerfile', '../go.mod', '../go.sum', '../cmd', '../internal', '../api'],
-    disable_push=True,
-)
+# Pushed to the k3d registry, which Tilt finds by itself.
+docker_build('teamcity-operator', '..', only=['go.mod', 'go.sum', 'cmd', 'api', 'internal'])
 
 helm_resource(
     'cert-manager',
@@ -41,16 +34,6 @@ helm_resource(
     namespace='cert-manager',
     flags=['--create-namespace', '--version', 'v1.17.2', '-f', 'values/cert-manager.yaml'],
     deps=['values/cert-manager.yaml'],
-    pod_readiness='wait',
-    labels=['cluster'],
-)
-
-helm_resource(
-    'traefik',
-    chart='oci://ghcr.io/traefik/helm/traefik',
-    namespace='traefik',
-    flags=['--create-namespace', '--version', '42.4.1', '-f', 'values/traefik.yaml'],
-    deps=['values/traefik.yaml'],
     pod_readiness='wait',
     labels=['cluster'],
 )
@@ -121,7 +104,7 @@ helm_resource(
     namespace='teamcity',
     flags=['-f', 'values/teamcity.yaml', '--set', 'ingress.host=' + TEAMCITY_HOST],
     deps=['charts/teamcity', 'values/teamcity.yaml'],
-    resource_deps=['teamcity-operator', 'teamcity-database', 'traefik', 'csi-driver-nfs'],
+    resource_deps=['teamcity-operator', 'teamcity-database', 'csi-driver-nfs'],
     pod_readiness='wait',
     labels=['teamcity'],
     # The proxy and the nodes all listen on 8111, so the port forward works

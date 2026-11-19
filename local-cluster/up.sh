@@ -1,17 +1,13 @@
 #!/bin/sh
-# Starts the vind cluster unless it runs already, adds it to your kubeconfig
-# as the current context, then runs tilt up (with any arguments given).
+# Starts the k3d cluster unless it runs already, makes it your current kube
+# context, then runs tilt up (with any arguments given).
 set -eu
 cd "$(dirname "$0")"
 
-case $(docker inspect -f '{{.State.Status}}' vcluster.cp.teamcity 2>/dev/null || true) in
-running) ;;
-'') vcluster create teamcity --driver docker --values vind.yaml --connect=false ;;
-*) vcluster resume teamcity --driver docker ;;
-esac
-
-vcluster connect teamcity --driver docker
+k3d cluster get teamcity >/dev/null 2>&1 || k3d cluster create --config k3d.yaml
+k3d cluster start teamcity
+k3d kubeconfig merge teamcity --kubeconfig-merge-default --kubeconfig-switch-context >/dev/null
 # Tilt gets its own kubeconfig, so switching contexts leaves it alone.
-vcluster connect teamcity --driver docker --print >kubeconfig.yaml
+k3d kubeconfig get teamcity >kubeconfig.yaml
 export KUBECONFIG="$PWD/kubeconfig.yaml"
 exec tilt up "$@"

@@ -1,7 +1,0 @@
-# vind's LoadBalancer IPs live on the Docker network, which browsers outside
-# the Docker host (Windows with WSL, macOS) cannot reach, so the node publishes
-# host port 80 to Traefik's NodePort instead.
-experimental:
-  docker:
-    ports:
-      - "80:30080"
