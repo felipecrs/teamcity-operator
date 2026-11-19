@@ -1,0 +1,21 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: teamcity
+image: rancher/k3s:v1.37.2-k3s1
+servers: 1
+ports:
+  # Traefik, which k3s bundles, behind the k3d load balancer.
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+volumes:
+  # The NFS server exports this: the kernel cannot export the node's overlay
+  # root filesystem.
+  - volume: k3d-teamcity-nfs:/var/lib/nfs-exports
+    nodeFilters:
+      - server:0
+registries:
+  # Tilt finds and pushes to this registry by itself.
+  create:
+    name: teamcity-registry

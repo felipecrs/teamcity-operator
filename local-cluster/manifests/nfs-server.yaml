@@ -1,0 +1,51 @@
+# An in-kernel NFS server for ReadWriteMany volumes (the nfs StorageClass of
+# csi-driver-nfs), from the Kubernetes e2e test images. It exports a directory
+# on the node's ext4 /var: the kernel cannot export the overlay root.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nfs
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-server
+  namespace: nfs
+spec:
+  selector:
+    matchLabels:
+      app: nfs-server
+  template:
+    metadata:
+      labels:
+        app: nfs-server
+    spec:
+      containers:
+        - name: nfs-server
+          image: registry.k8s.io/e2e-test-images/volume/nfs:1.6.0
+          args: [/exports]
+          securityContext:
+            privileged: true
+          ports:
+            - name: nfs
+              containerPort: 2049
+          volumeMounts:
+            - name: exports
+              mountPath: /exports
+      volumes:
+        - name: exports
+          hostPath:
+            path: /var/lib/nfs-exports
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nfs-server
+  namespace: nfs
+spec:
+  selector:
+    app: nfs-server
+  ports:
+    - name: nfs
+      port: 2049

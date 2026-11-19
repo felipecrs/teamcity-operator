@@ -1,0 +1,27 @@
+{{- range $name, $agent := .Values.agents }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-{{ $name }}
+  labels:
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+spec:
+  # TeamCity creates the agent pods from this template. They lack the
+  # ReplicaSet's pod-template-hash label, so it leaves them alone.
+  replicas: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+      app.kubernetes.io/component: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+        app.kubernetes.io/component: {{ $name }}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: agent
+          image: {{ $agent.image }}
+{{- end }}

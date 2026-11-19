@@ -1,0 +1,43 @@
+image: jetbrains/teamcity-server:2026.2.2
+
+database:
+  connectionUrl: ""
+  user: ""
+  password: ""
+
+# Passed to every node as -D options.
+startupProperties:
+  # Apply upgrades and other startup steps without waiting on a maintenance
+  # page, where the readiness probe would keep failing.
+  teamcity.startup.maintenance: "false"
+
+# Shared by all the nodes, so its storage class must support ReadWriteMany.
+dataDir:
+  storageClassName: ""
+  size: 5Gi
+
+# Each node's own data directory (node-specific configuration and caches),
+# best kept on local storage.
+nodeDataDir:
+  storageClassName: ""
+  size: 5Gi
+
+# The share of each node's memory request for the JVM heap. The operator's
+# default of 95 leaves no room for the rest of the JVM.
+xmxPercentage: 50
+
+# spec takes the operator's NodeSpec fields.
+mainNode:
+  name: main-node
+  spec: {}
+
+secondaryNodes: []
+  # - name: secondary-node-1
+  #   spec:
+  #     responsibilities: [CAN_PROCESS_BUILD_MESSAGES]
+
+proxy:
+  image: haproxy:3.2.26-alpine
+
+ingress:
+  host: ""

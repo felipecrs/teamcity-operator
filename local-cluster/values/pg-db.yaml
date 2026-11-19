@@ -1,0 +1,35 @@
+crVersion: 3.1.0
+postgresVersion: 18
+instances:
+  # One instance: after a failover, PgBouncer stays connected to the demoted,
+  # now read-only, instance and TeamCity fails to write.
+  - name: instance1
+    replicas: 1
+    dataVolumeClaimSpec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+proxy:
+  pgBouncer:
+    replicas: 1
+    # The 3 TeamCity nodes outgrow PgBouncer's default pool of 20, and then
+    # their queries fail with query_wait_timeout.
+    config:
+      global:
+        default_pool_size: "80"
+        max_client_conn: "300"
+backups:
+  enabled: false
+logcollector:
+  enabled: false
+users:
+  # Not a superuser: PgBouncer refuses to authenticate those.
+  - name: teamcity
+    databases:
+      - teamcity
+    grantPublicSchemaAccess: true
+    password:
+      type: ASCII
+    secretName: teamcity-pg-credentials

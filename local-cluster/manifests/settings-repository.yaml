@@ -1,0 +1,59 @@
+# Serves the Kotlin DSL in .teamcity as git://teamcity-settings/settings, since
+# TeamCity loads versioned settings only from a VCS. It commits whatever the
+# teamcity-settings ConfigMap, kept in sync by Tilt, holds.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity-settings
+  namespace: teamcity
+spec:
+  selector:
+    matchLabels:
+      app: teamcity-settings
+  template:
+    metadata:
+      labels:
+        app: teamcity-settings
+    spec:
+      containers:
+        - name: git
+          # Has git daemon, and is pulled anyway.
+          image: jetbrains/teamcity-server:2026.2.2
+          command:
+            - sh
+            - -c
+            - |
+              git init -q -b main /srv/settings && cd /srv/settings
+              while true; do
+                rm -rf .teamcity && mkdir .teamcity && cp -L /settings/* .teamcity/
+                git add -A
+                git diff --cached --quiet || git -c user.name=tilt -c user.email=tilt@localhost commit -q -m Sync
+                sleep 5
+              done &
+              exec git daemon --export-all --base-path=/srv --reuseaddr
+          ports:
+            - name: git
+              containerPort: 9418
+          volumeMounts:
+            - name: settings
+              mountPath: /settings
+            - name: repository
+              mountPath: /srv
+      volumes:
+        - name: settings
+          configMap:
+            name: teamcity-settings
+        - name: repository
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teamcity-settings
+  namespace: teamcity
+spec:
+  selector:
+    app: teamcity-settings
+  ports:
+    - name: git
+      port: 9418

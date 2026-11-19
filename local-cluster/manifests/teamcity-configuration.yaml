@@ -1,0 +1,74 @@
+# Configures what the Kotlin DSL cannot: the server URL (TEAMCITY_URL, set by
+# the Tiltfile), the agents token and cluster CA the DSL uses, and the
+# versioned settings that load the DSL. It runs in teamcity-agents to mount
+# the token.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: teamcity-configuration
+  namespace: teamcity-agents
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      containers:
+        - name: configure
+          image: jetbrains/teamcity-server:2026.2.2
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              rest() {
+                method=$1 path=$2
+                shift 2
+                curl -sSf -u :super -H Accept:application/json -H Content-Type:application/json \
+                  -X "$method" "http://main-node-0.teamcity/httpAuth/app/rest/$path" "$@"
+              }
+
+              until curl -sf -o /dev/null http://main-node-0.teamcity/healthCheck/ready; do sleep 5; done
+
+              rest GET server/globalSettings |
+                sed "s|\"rootUrl\":\"[^\"]*\"|\"rootUrl\":\"$TEAMCITY_URL\"|" |
+                rest PUT server/globalSettings --data-binary @- >/dev/null
+
+              rest POST projects/_Root/versionedSettings/tokens --data-binary \
+                "{\"versionedSettingsToken\": [{\"name\": \"kubernetes-agents-token\", \"value\": \"$(cat /agents/token)\"}]}" >/dev/null
+              rest PUT projects/_Root/versionedSettings/contextParameters --data-binary \
+                "{\"versionedSettingsContextParameter\": [{\"name\": \"kubernetesCaCert\", \"value\": \"$(awk '{printf "%s\\n", $0}' /agents/ca.crt)\"}]}" >/dev/null
+
+              rest GET vcs-roots/id:LocalClusterSettings >/dev/null 2>&1 ||
+                rest POST vcs-roots --data-binary '{
+                  "id": "LocalClusterSettings",
+                  "name": "Local cluster settings",
+                  "vcsName": "jetbrains.git",
+                  "project": {"id": "_Root"},
+                  "modificationCheckInterval": 10,
+                  "properties": {"property": [
+                    {"name": "url", "value": "git://teamcity-settings.teamcity/settings"},
+                    {"name": "branch", "value": "refs/heads/main"},
+                    {"name": "authMethod", "value": "ANONYMOUS"}
+                  ]}
+                }' >/dev/null
+              # Refused once versioned settings are enabled.
+              rest GET projects/_Root/versionedSettings/config | grep -q '"synchronizationMode":"enabled"' ||
+                rest PUT projects/_Root/versionedSettings/config --data-binary '{
+                  "synchronizationMode": "enabled",
+                  "vcsRootId": "LocalClusterSettings",
+                  "format": "kotlin",
+                  "portableDsl": true,
+                  "dslExecutionMode": "sandbox",
+                  "allowUIEditing": false,
+                  "importDecision": "importFromVCS",
+                  "showSettingsChanges": true
+                }' >/dev/null
+              rest GET projects/_Root/versionedSettings/status
+          volumeMounts:
+            - name: agents-token
+              mountPath: /agents
+      volumes:
+        - name: agents-token
+          secret:
+            secretName: teamcity-agents-token

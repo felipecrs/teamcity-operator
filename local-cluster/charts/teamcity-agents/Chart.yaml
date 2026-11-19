@@ -1,0 +1,4 @@
+apiVersion: v2
+name: teamcity-agents
+description: Build agent pod templates for TeamCity's Kubernetes cloud profiles, and the access TeamCity needs to run them
+version: 0.1.0

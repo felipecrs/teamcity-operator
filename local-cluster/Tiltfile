@@ -1,0 +1,171 @@
+# Run through ./up.sh, which starts the k3d cluster first.
+
+# The IP of the default route, reachable from the browser and from the pods.
+MACHINE_IP = str(local(
+    "python3 -c 'import socket; s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect((\"1.1.1.1\", 80)); print(s.getsockname()[0])'",
+    quiet=True,
+)).strip()
+TEAMCITY_HOST = 'teamcity.%s.nip.io' % MACHINE_IP
+TEAMCITY_URL = 'http://' + TEAMCITY_HOST
+
+# Cold starts (image pulls, cert-manager webhooks) outlast the 30s default.
+update_settings(k8s_upsert_timeout_secs=900)
+# The secrets are fixed local values, and the database password "teamcity"
+# would otherwise be redacted from every resource name in the logs.
+secret_settings(disable_scrub=True)
+
+load('ext://helm_resource', 'helm_resource')
+load('ext://configmap', 'configmap_create')
+load('ext://uibutton', 'cmd_button')
+
+def teamcity_rest(method, path, body='{}'):
+    return [
+        'kubectl', '--namespace', 'teamcity', 'exec', 'main-node-0', '--',
+        'curl', '-sSf', '-u', ':super', '-H', 'Content-Type: application/json',
+        '-X', method, '-d', body, 'localhost:8111/httpAuth/app/rest/' + path,
+    ]
+
+# Pushed to the k3d registry, which Tilt finds by itself.
+docker_build('teamcity-operator', '..', only=['go.mod', 'go.sum', 'cmd', 'api', 'internal'])
+
+helm_resource(
+    'cert-manager',
+    chart='oci://quay.io/jetstack/charts/cert-manager',
+    namespace='cert-manager',
+    flags=['--create-namespace', '--version', 'v1.17.2', '-f', 'values/cert-manager.yaml'],
+    deps=['values/cert-manager.yaml'],
+    pod_readiness='wait',
+    labels=['cluster'],
+)
+
+helm_resource(
+    'percona-postgresql-operator',
+    chart='oci://ghcr.io/percona/percona-helm-charts/pg-operator',
+    namespace='percona-postgresql-operator',
+    flags=['--create-namespace', '--version', '3.1.0', '-f', 'values/pg-operator.yaml'],
+    deps=['values/pg-operator.yaml'],
+    pod_readiness='wait',
+    labels=['database'],
+)
+
+# ReadWriteMany volumes over NFS, for the data directory the TeamCity nodes share.
+k8s_yaml('manifests/nfs-server.yaml')
+k8s_resource('nfs-server', objects=['nfs:namespace'], labels=['cluster'])
+
+helm_resource(
+    'csi-driver-nfs',
+    chart='csi-driver-nfs',
+    namespace='kube-system',
+    flags=[
+        '--repo', 'https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts',
+        '--version', '4.13.6',
+        '-f', 'values/csi-driver-nfs.yaml',
+    ],
+    deps=['values/csi-driver-nfs.yaml'],
+    resource_deps=['nfs-server'],
+    pod_readiness='wait',
+    labels=['cluster'],
+)
+
+k8s_yaml('manifests/database-credentials.yaml')
+k8s_resource(
+    new_name='database-credentials',
+    objects=['teamcity:namespace', 'teamcity-pg-credentials:secret'],
+    labels=['database'],
+)
+
+helm_resource(
+    'teamcity-database',
+    chart='oci://ghcr.io/percona/percona-helm-charts/pg-db',
+    namespace='teamcity',
+    flags=['--version', '3.1.0', '-f', 'values/pg-db.yaml'],
+    deps=['values/pg-db.yaml'],
+    resource_deps=['percona-postgresql-operator', 'database-credentials'],
+    pod_readiness='wait',
+    labels=['database'],
+)
+
+helm_resource(
+    'teamcity-operator',
+    chart='../charts/teamcity-operator',
+    namespace='teamcity-operator',
+    flags=['--create-namespace'],
+    deps=['../charts/teamcity-operator'],
+    image_deps=['teamcity-operator'],
+    image_keys=[('controllerManager.manager.image.repository', 'controllerManager.manager.image.tag')],
+    resource_deps=['cert-manager'],
+    pod_readiness='wait',
+    labels=['operator'],
+)
+
+helm_resource(
+    'teamcity',
+    chart='charts/teamcity',
+    namespace='teamcity',
+    flags=['-f', 'values/teamcity.yaml', '--set', 'ingress.host=' + TEAMCITY_HOST],
+    deps=['charts/teamcity', 'values/teamcity.yaml'],
+    resource_deps=['teamcity-operator', 'teamcity-database', 'csi-driver-nfs'],
+    pod_readiness='wait',
+    labels=['teamcity'],
+    # The proxy and the nodes all listen on 8111, so the port forward works
+    # whichever pod it lands on, even when the machine IP does not.
+    links=[link(TEAMCITY_URL + '/login.html?super=1', 'TeamCity')],
+    port_forwards=[port_forward(8111, 8111, 'TeamCity (localhost)', link_path='/login.html?super=1')],
+)
+cmd_button(
+    'teamcity:run-pipeline',
+    resource='teamcity',
+    argv=teamcity_rest('POST', 'buildQueue', '{"buildType": {"id": "Release"}}'),
+    text='Run example pipeline',
+    icon_name='play_arrow',
+)
+cmd_button(
+    'teamcity:helm-test',
+    resource='teamcity',
+    argv=['helm', 'test', 'teamcity', '--namespace', 'teamcity', '--logs'],
+    text='Run helm test',
+    icon_name='fact_check',
+)
+
+helm_resource(
+    'teamcity-agents',
+    chart='charts/teamcity-agents',
+    namespace='teamcity-agents',
+    flags=['--create-namespace'],
+    deps=['charts/teamcity-agents'],
+    pod_readiness='ignore',
+    labels=['teamcity'],
+)
+# Also show the agent pods TeamCity starts from the templates.
+k8s_resource('teamcity-agents', extra_pod_selectors=[{'app.kubernetes.io/instance': 'teamcity-agents'}])
+
+configmap_create(
+    'teamcity-settings',
+    namespace='teamcity',
+    from_file=['.teamcity/settings.kts', '.teamcity/pom.xml'],
+)
+k8s_yaml('manifests/settings-repository.yaml')
+k8s_resource(
+    'teamcity-settings',
+    objects=['teamcity-settings:configmap'],
+    resource_deps=['database-credentials'],
+    labels=['teamcity'],
+    links=[link(TEAMCITY_URL + '/admin/editProject.html?projectId=_Root&tab=versionedSettings', 'Versioned settings')],
+)
+# TeamCity stops applying the DSL after a failed import until told to load it.
+cmd_button(
+    'teamcity-settings:load',
+    resource='teamcity-settings',
+    argv=teamcity_rest('POST', 'projects/_Root/versionedSettings/loadSettings'),
+    text='Load settings from VCS',
+    icon_name='sync',
+)
+
+configuration = read_yaml_stream('manifests/teamcity-configuration.yaml')
+configuration[0]['spec']['template']['spec']['containers'][0]['env'] = [{'name': 'TEAMCITY_URL', 'value': TEAMCITY_URL}]
+k8s_yaml(encode_yaml_stream(configuration))
+k8s_resource(
+    'teamcity-configuration',
+    resource_deps=['teamcity', 'teamcity-agents', 'teamcity-settings'],
+    labels=['teamcity'],
+)

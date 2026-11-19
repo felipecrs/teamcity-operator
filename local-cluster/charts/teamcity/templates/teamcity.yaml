@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-database
+  labels:
+    {{- include "teamcity.labels" . | nindent 4 }}
+stringData:
+  connectionUrl: {{ .Values.database.connectionUrl | quote }}
+  connectionProperties.user: {{ .Values.database.user | quote }}
+  connectionProperties.password: {{ .Values.database.password | quote }}
+---
+apiVersion: jetbrains.com/v1beta1
+kind: TeamCity
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "teamcity.nodeLabels" . | nindent 4 }}
+spec:
+  image: {{ .Values.image }}
+  databaseSecret:
+    secret: {{ .Release.Name }}-database
+  {{- with .Values.startupProperties }}
+  startupPropertiesConfig:
+    {{- range $name, $value := . }}
+    {{ $name }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  xmxPercentage: {{ .Values.xmxPercentage }}
+  dataDirVolumeClaim:
+    name: {{ .Release.Name }}-data-dir
+    volumeMount:
+      name: data-dir
+      mountPath: /storage
+    spec:
+      accessModes: [ReadWriteMany]
+      {{- with .Values.dataDir.storageClassName }}
+      storageClassName: {{ . }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.dataDir.size }}
+  mainNode:
+    name: {{ .Values.mainNode.name }}
+    spec:
+      {{- toYaml .Values.mainNode.spec | nindent 6 }}
+      {{- include "teamcity.nodeDataDir" (dict "root" $ "node" .Values.mainNode) | nindent 6 }}
+      # TeamCity retries an unreachable database, but stops at a startup error
+      # when the database rejects its login, as a database still being set up
+      # does.
+      initContainers:
+        - name: wait-for-database
+          image: postgres:18.7-alpine
+          env:
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-database
+                  key: connectionProperties.user
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-database
+                  key: connectionProperties.password
+          command:
+            - sh
+            - -c
+            - until psql {{ trimPrefix "jdbc:" .Values.database.connectionUrl | quote }} -c 'select 1' >/dev/null; do sleep 5; done
+  {{- with .Values.secondaryNodes }}
+  secondaryNodes:
+    {{- range . }}
+    - name: {{ .name }}
+      spec:
+        {{- toYaml .spec | nindent 8 }}
+        {{- include "teamcity.nodeDataDir" (dict "root" $ "node" .) | nindent 8 }}
+        # A node connecting while the main one takes its database lock stops at
+        # "Second TeamCity instance detected" until an administrator steps in.
+        initContainers:
+          - name: wait-for-main-node
+            image: {{ $.Values.image }}
+            command:
+              - sh
+              - -c
+              - until curl -sf -o /dev/null http://{{ $.Values.mainNode.name }}-0/healthCheck/ready; do sleep 5; done
+    {{- end }}
+  {{- end }}

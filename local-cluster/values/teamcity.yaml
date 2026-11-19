@@ -1,0 +1,36 @@
+dataDir:
+  storageClassName: nfs
+database:
+  connectionUrl: jdbc:postgresql://teamcity-database-pg-pgbouncer:5432/teamcity
+  user: teamcity
+  password: teamcity
+startupProperties:
+  # Undocumented: read by LicenseAgreementImpl, which then stores the
+  # acceptance in the database.
+  teamcity.licenseAgreement.accepted: "true"
+  teamcity.firstStart.setupAdmin.enabled: "false"
+  teamcity.superUser.token: super
+mainNode:
+  spec:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    responsibilities:
+      - MAIN_NODE
+      - CAN_PROCESS_USER_DATA_MODIFICATION_REQUESTS
+secondaryNodes:
+  - name: secondary-node-1
+    spec:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      responsibilities:
+        - CAN_PROCESS_BUILD_MESSAGES
+        - CAN_CHECK_FOR_CHANGES
+  - name: secondary-node-2
+    spec:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      responsibilities:
+        - CAN_PROCESS_BUILD_TRIGGERS

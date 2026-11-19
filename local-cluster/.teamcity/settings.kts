@@ -1,0 +1,82 @@
+import jetbrains.buildServer.configs.kotlin.*
+import jetbrains.buildServer.configs.kotlin.buildSteps.script
+
+version = "2026.2"
+
+project {
+    features {
+        kubernetesCloudProfile {
+            id = "LocalCluster"
+            name = "Local cluster"
+            apiServerURL = "https://kubernetes.default.svc"
+            caCertData = DslContext.getParameter("kubernetesCaCert")
+            namespace = "teamcity-agents"
+            authStrategy = token {
+                token = "credentialsJSON:kubernetes-agents-token"
+            }
+            serverURL = "http://teamcity.teamcity"
+            terminateIdleMinutes = 10
+        }
+        kubernetesCloudImage {
+            id = "MinimalAgent"
+            profileId = "LocalCluster"
+            agentNamePrefix = "minimal"
+            maxInstancesCount = 3
+            podSpecification = deploymentTemplate {
+                deploymentName = "teamcity-agents-minimal"
+            }
+        }
+    }
+
+    subProject(Examples)
+}
+
+object Examples : Project({
+    name = "Examples"
+
+    // Rerun every build each time, instead of reusing those at the same revision.
+    sequential {
+        buildType(Build)
+        parallel({ reuseBuilds = ReuseBuilds.NO }) {
+            (1..3).forEach { buildType(Test(it)) }
+        }
+        buildType(Release) { reuseBuilds = ReuseBuilds.NO }
+    }.buildTypes().forEach { buildType(it) }
+})
+
+object Build : BuildType({
+    name = "Build"
+    artifactRules = "app.txt"
+    steps {
+        script {
+            scriptContent = """
+                echo "Built by %teamcity.agent.name% in build %build.number%" > app.txt
+                sleep 10
+            """.trimIndent()
+        }
+    }
+})
+
+class Test(shard: Int) : BuildType({
+    id("Test$shard")
+    name = "Test $shard"
+    steps {
+        script {
+            scriptContent = """
+                cat app.txt
+                sleep 20
+                echo "Shard $shard passed on %teamcity.agent.name%"
+            """.trimIndent()
+        }
+    }
+    dependencies {
+        artifacts(Build) {
+            artifactRules = "app.txt"
+        }
+    }
+})
+
+object Release : BuildType({
+    name = "Release"
+    type = BuildTypeSettings.Type.COMPOSITE
+})

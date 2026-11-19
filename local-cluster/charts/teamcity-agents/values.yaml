@@ -1,0 +1,5 @@
+# Each agent becomes a Deployment scaled to zero, named <release>-<key>, for a
+# TeamCity Kubernetes cloud image of type "Use pod template from deployment".
+agents:
+  minimal:
+    image: jetbrains/teamcity-minimal-agent:2026.2.2

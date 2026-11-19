@@ -1,0 +1,17 @@
+storageClass:
+  create: true
+  name: nfs
+  parameters:
+    server: nfs-server.nfs.svc.cluster.local
+    share: /
+  mountOptions:
+    - nfsvers=4.1
+    # The server runs in the cluster, so it can disappear before its clients,
+    # for example when the cluster stops: soft mounts then fail instead of
+    # hanging (unkillable) forever.
+    - soft
+    - timeo=30
+    - retrans=2
+controller:
+  # No VolumeSnapshot CRDs here, so the snapshotter would only log errors.
+  enableSnapshotter: false
