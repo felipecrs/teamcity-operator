@@ -5,7 +5,6 @@ database:
   user: teamcity
   password: teamcity
 startupProperties:
-  teamcity.startup.maintenance: "false"
   # Undocumented: read by LicenseAgreementImpl, which then stores the
   # acceptance in the database.
   teamcity.licenseAgreement.accepted: "true"

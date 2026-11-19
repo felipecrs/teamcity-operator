@@ -1,7 +1,7 @@
 import jetbrains.buildServer.configs.kotlin.*
 import jetbrains.buildServer.configs.kotlin.buildSteps.script
 
-version = "2026.1"
+version = "2026.2"
 
 project {
     features {

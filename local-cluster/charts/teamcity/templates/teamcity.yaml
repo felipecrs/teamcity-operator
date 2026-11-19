@@ -43,12 +43,14 @@ spec:
     name: {{ .Values.mainNode.name }}
     spec:
       {{- toYaml .Values.mainNode.spec | nindent 6 }}
+      {{- include "teamcity.nodeDataDir" (dict "root" $ "node" .Values.mainNode) | nindent 6 }}
   {{- with .Values.secondaryNodes }}
   secondaryNodes:
     {{- range . }}
     - name: {{ .name }}
       spec:
         {{- toYaml .spec | nindent 8 }}
+        {{- include "teamcity.nodeDataDir" (dict "root" $ "node" .) | nindent 8 }}
         # A node connecting while the main one takes its database lock stops at
         # "Second TeamCity instance detected" until an administrator steps in.
         initContainers:

@@ -17,3 +17,19 @@ app.kubernetes.io/component: teamcity-server
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/component: proxy
 {{- end }}
+
+{{- define "teamcity.nodeDataDir" -}}
+nodeDataDirVolumeClaim:
+  name: {{ .root.Release.Name }}-{{ .node.name }}-data-dir
+  volumeMount:
+    name: node-data-dir
+    mountPath: /node-data
+  spec:
+    accessModes: [ReadWriteOnce]
+    {{- with .root.Values.nodeDataDir.storageClassName }}
+    storageClassName: {{ . }}
+    {{- end }}
+    resources:
+      requests:
+        storage: {{ .root.Values.nodeDataDir.size }}
+{{- end }}

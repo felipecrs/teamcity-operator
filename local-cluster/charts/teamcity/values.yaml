@@ -6,10 +6,19 @@ database:
   password: ""
 
 # Passed to every node as -D options.
-startupProperties: {}
+startupProperties:
+  # Apply upgrades and other startup steps without waiting on a maintenance
+  # page, where the readiness probe would keep failing.
+  teamcity.startup.maintenance: "false"
 
 # Shared by all the nodes, so its storage class must support ReadWriteMany.
 dataDir:
+  storageClassName: ""
+  size: 5Gi
+
+# Each node's own data directory (node-specific configuration and caches),
+# best kept on local storage.
+nodeDataDir:
   storageClassName: ""
   size: 5Gi
 
