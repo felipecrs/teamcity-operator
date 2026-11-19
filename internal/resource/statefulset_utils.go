@@ -54,7 +54,7 @@ func DefaultEnvironmentVariableBuilder(nodeName string, xmxValue string, dataDir
 		PodNameEnvVariableBuilder(),
 		PodNamespaceEnvVariableBuilder(),
 		DataDirPathEnvVar(dataDirPath),
-		LogDirPathEnvVar(dataDirPath),
+		LogDirPathEnvVar(dataDirPath, nodeName),
 		ServerMemOptsEnvVar(xmxValue),
 		ServerOptsEnvVar(dataDirPath, nodeName, extraServerOpts),
 	}
@@ -67,10 +67,12 @@ func DataDirPathEnvVar(dataDirPath string) v12.EnvVar {
 	}
 }
 
-func LogDirPathEnvVar(dataDirPath string) v12.EnvVar {
+// Each node gets its own logs directory: they share the data directory, and
+// would otherwise write to the same log, pid and lock files.
+func LogDirPathEnvVar(dataDirPath string, nodeName string) v12.EnvVar {
 	return v12.EnvVar{
 		Name:  "TEAMCITY_LOGS_PATH",
-		Value: fmt.Sprintf("%s%s", dataDirPath, "/logs"),
+		Value: fmt.Sprintf("%s/logs/%s", dataDirPath, nodeName),
 	}
 }
 
