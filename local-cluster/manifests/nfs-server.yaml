@@ -1,6 +1,6 @@
 # An in-kernel NFS server for ReadWriteMany volumes (the nfs StorageClass of
-# csi-driver-nfs), as in csi-driver-nfs' examples. It exports a directory on
-# the node's ext4 /var: the kernel cannot export the overlay root.
+# csi-driver-nfs), from the Kubernetes e2e test images. It exports a directory
+# on the node's ext4 /var: the kernel cannot export the overlay root.
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -22,10 +22,8 @@ spec:
     spec:
       containers:
         - name: nfs-server
-          image: itsthenetwork/nfs-server-alpine:12
-          env:
-            - name: SHARED_DIRECTORY
-              value: /exports
+          image: registry.k8s.io/e2e-test-images/volume/nfs:1.6.0
+          args: [/exports]
           securityContext:
             privileged: true
           ports:
