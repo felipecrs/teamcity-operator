@@ -119,7 +119,7 @@ var _ = Describe("StatefulSet", func() {
 
 			logsPath := v12.EnvVar{
 				Name:  "TEAMCITY_LOGS_PATH",
-				Value: fmt.Sprintf("%s/%s", datadirPath, "logs"),
+				Value: fmt.Sprintf("%s/logs/%s", datadirPath, Instance.Spec.MainNode.Name),
 			}
 
 			memOpts := v12.EnvVar{
