@@ -456,7 +456,7 @@ spec:
 
 ### Per-node data directory
 
-TeamCity can keep node-specific caches on a separate volume via `-Dteamcity.node.data.path`. Set optional `spec.mainNode.spec.nodeDataDirVolumeClaim` / `spec.secondaryNodes[].spec.nodeDataDirVolumeClaim`. Whenever `nodeDataDirVolumeClaim` is present, the operator mounts it and sets `-Dteamcity.node.data.path=<mountPath>`.
+TeamCity can keep node-specific caches on a separate volume via `-Dteamcity.node.data.path`. Set optional `spec.mainNode.spec.nodeDataDirVolumeClaim` / `spec.secondaryNodes[].spec.nodeDataDirVolumeClaim`. Whenever `nodeDataDirVolumeClaim` is present, the operator mounts it, sets `-Dteamcity.node.data.path=<mountPath>`, and has the node write its logs to `<mountPath>/logs`.
 
 Volume mount name and path must be the same on every node that enables the feature.
 
