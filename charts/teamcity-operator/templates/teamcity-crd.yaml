@@ -5,7 +5,7 @@ metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "teamcity-operator.fullname"
       . }}-serving-cert'
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
   {{- include "teamcity-operator.labels" . | nindent 4 }}
 spec:
@@ -201,10 +201,8 @@ spec:
                               Claims lists the names of resources, defined in spec.resourceClaims,
                               that are used by this container.
   
-  
                               This is an alpha field and requires enabling the
                               DynamicResourceAllocation feature gate.
-  
   
                               This field is immutable. It can only be set for containers.
                             items:
@@ -524,9 +522,9 @@ spec:
                                   change in the future.\nIncoming requests are matched
                                   against the host before the\nIngressRuleValue. If
                                   the host is unspecified, the Ingress routes all\ntraffic
-                                  based on the specified IngressRuleValue.\n\n\nhost
-                                  can be \"precise\" which is a domain name without
-                                  the terminating dot of\na network host (e.g. \"foo.bar.com\")
+                                  based on the specified IngressRuleValue.\n\nhost can
+                                  be \"precise\" which is a domain name without the
+                                  terminating dot of\na network host (e.g. \"foo.bar.com\")
                                   or \"wildcard\", which is a domain name\nprefixed
                                   with a single wildcard label (e.g. \"*.foo.com\").\nThe
                                   wildcard character '*' must appear by itself as the
@@ -1504,7 +1502,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                     optional:
                                       description: Specify whether the ConfigMap or
@@ -1567,7 +1564,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                     optional:
                                       description: Specify whether the Secret or its
@@ -1651,7 +1647,6 @@ spec:
                                             description: |-
                                               Name of the referent.
                                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Add other useful fields. apiVersion, kind, uid?
                                             type: string
                                           optional:
                                             description: Specify whether the ConfigMap
@@ -1715,7 +1710,6 @@ spec:
                                             description: |-
                                               Name of the referent.
                                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Add other useful fields. apiVersion, kind, uid?
                                             type: string
                                           optional:
                                             description: Specify whether the Secret
@@ -1749,7 +1743,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                       optional:
                                         description: Specify whether the ConfigMap must
@@ -1768,7 +1761,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                       optional:
                                         description: Specify whether the Secret must
@@ -2027,10 +2019,10 @@ spec:
                                       format: int32
                                       type: integer
                                     service:
+                                      default: ""
                                       description: |-
                                         Service is the name of the service to place in the gRPC HealthCheckRequest
                                         (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                         If this is not specified, the default behavior is defined by gRPC.
                                       type: string
@@ -2240,10 +2232,10 @@ spec:
                                       format: int32
                                       type: integer
                                     service:
+                                      default: ""
                                       description: |-
                                         Service is the name of the service to place in the gRPC HealthCheckRequest
                                         (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                         If this is not specified, the default behavior is defined by gRPC.
                                       type: string
@@ -2392,10 +2384,8 @@ spec:
                                     Claims lists the names of resources, defined in spec.resourceClaims,
                                     that are used by this container.
   
-  
                                     This is an alpha field and requires enabling the
                                     DynamicResourceAllocation feature gate.
-  
   
                                     This field is immutable. It can only be set for containers.
                                   items:
@@ -2587,7 +2577,6 @@ spec:
                                         type indicates which kind of seccomp profile will be applied.
                                         Valid options are:
   
-  
                                         Localhost - a profile defined in a file on the node should be used.
                                         RuntimeDefault - the container runtime default profile should be used.
                                         Unconfined - no profile should be applied.
@@ -2668,10 +2657,10 @@ spec:
                                       format: int32
                                       type: integer
                                     service:
+                                      default: ""
                                       description: |-
                                         Service is the name of the service to place in the gRPC HealthCheckRequest
                                         (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                         If this is not specified, the default behavior is defined by gRPC.
                                       type: string
@@ -2954,10 +2943,10 @@ spec:
                                 format: int32
                                 type: integer
                               service:
+                                default: ""
                                 description: |-
                                   Service is the name of the service to place in the gRPC HealthCheckRequest
                                   (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                   If this is not specified, the default behavior is defined by gRPC.
                                 type: string
@@ -3187,10 +3176,8 @@ spec:
                                       Claims lists the names of resources, defined in spec.resourceClaims,
                                       that are used by this container.
   
-  
                                       This is an alpha field and requires enabling the
                                       DynamicResourceAllocation feature gate.
-  
   
                                       This field is immutable. It can only be set for containers.
                                     items:
@@ -3465,10 +3452,8 @@ spec:
                                         Claims lists the names of resources, defined in spec.resourceClaims,
                                         that are used by this container.
   
-  
                                         This is an alpha field and requires enabling the
                                         DynamicResourceAllocation feature gate.
-  
   
                                         This field is immutable. It can only be set for containers.
                                       items:
@@ -3635,11 +3620,9 @@ spec:
                               Some volume types allow the Kubelet to change the ownership of that volume
                               to be owned by the pod:
   
-  
                               1. The owning GID will be the FSGroup
                               2. The setgid bit is set (new files created in the volume will be owned by FSGroup)
                               3. The permission bits are OR'd with rw-rw----
-  
   
                               If unset, the Kubelet will not modify the ownership and permissions of any volume.
                               Note that this field cannot be set when spec.os.name is windows.
@@ -3727,7 +3710,6 @@ spec:
                                   type indicates which kind of seccomp profile will be applied.
                                   Valid options are:
   
-  
                                   Localhost - a profile defined in a file on the node should be used.
                                   RuntimeDefault - the container runtime default profile should be used.
                                   Unconfined - no profile should be applied.
@@ -3800,6 +3782,10 @@ spec:
                                 type: string
                             type: object
                         type: object
+                      priorityClassName:
+                        description: PriorityClassName is the name of the PriorityClass
+                          for the pod.
+                        type: string
                       readinessProbeSettings:
                         default:
                           failureThreshold: 3
@@ -3840,10 +3826,10 @@ spec:
                                 format: int32
                                 type: integer
                               service:
+                                default: ""
                                 description: |-
                                   Service is the name of the service to place in the gRPC HealthCheckRequest
                                   (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                   If this is not specified, the default behavior is defined by gRPC.
                                 type: string
@@ -4017,10 +4003,10 @@ spec:
                                 format: int32
                                 type: integer
                               service:
+                                default: ""
                                 description: |-
                                   Service is the name of the service to place in the gRPC HealthCheckRequest
                                   (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                   If this is not specified, the default behavior is defined by gRPC.
                                 type: string
@@ -4135,6 +4121,219 @@ spec:
                             format: int32
                             type: integer
                         type: object
+                      tolerations:
+                        items:
+                          description: |-
+                            The pod this Toleration is attached to tolerates any taint that matches
+                            the triple <key,value,effect> using the matching operator <operator>.
+                          properties:
+                            effect:
+                              description: |-
+                                Effect indicates the taint effect to match. Empty means match all taint effects.
+                                When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                              type: string
+                            key:
+                              description: |-
+                                Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                                If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                              type: string
+                            operator:
+                              description: |-
+                                Operator represents a key's relationship to the value.
+                                Valid operators are Exists and Equal. Defaults to Equal.
+                                Exists is equivalent to wildcard for value, so that a pod can
+                                tolerate all taints of a particular category.
+                              type: string
+                            tolerationSeconds:
+                              description: |-
+                                TolerationSeconds represents the period of time the toleration (which must be
+                                of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                                it is not set, which means tolerate the taint forever (do not evict). Zero and
+                                negative values will be treated as 0 (evict immediately) by the system.
+                              format: int64
+                              type: integer
+                            value:
+                              description: |-
+                                Value is the taint value the toleration matches to.
+                                If the operator is Exists, the value should be empty, otherwise just a regular string.
+                              type: string
+                          type: object
+                        type: array
+                      topologySpreadConstraints:
+                        items:
+                          description: TopologySpreadConstraint specifies how to spread
+                            matching pods among the given topology.
+                          properties:
+                            labelSelector:
+                              description: |-
+                                LabelSelector is used to find matching pods.
+                                Pods that match this label selector are counted to determine the number of pods
+                                in their corresponding topology domain.
+                              properties:
+                                matchExpressions:
+                                  description: matchExpressions is a list of label selector
+                                    requirements. The requirements are ANDed.
+                                  items:
+                                    description: |-
+                                      A label selector requirement is a selector that contains values, a key, and an operator that
+                                      relates the key and values.
+                                    properties:
+                                      key:
+                                        description: key is the label key that the selector
+                                          applies to.
+                                        type: string
+                                      operator:
+                                        description: |-
+                                          operator represents a key's relationship to a set of values.
+                                          Valid operators are In, NotIn, Exists and DoesNotExist.
+                                        type: string
+                                      values:
+                                        description: |-
+                                          values is an array of string values. If the operator is In or NotIn,
+                                          the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                          the values array must be empty. This array is replaced during a strategic
+                                          merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: |-
+                                    matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                    map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                    operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                  type: object
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            matchLabelKeys:
+                              description: |-
+                                MatchLabelKeys is a set of pod label keys to select the pods over which
+                                spreading will be calculated. The keys are used to lookup values from the
+                                incoming pod labels, those key-value labels are ANDed with labelSelector
+                                to select the group of existing pods over which spreading will be calculated
+                                for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+                                MatchLabelKeys cannot be set when LabelSelector isn't set.
+                                Keys that don't exist in the incoming pod labels will
+                                be ignored. A null or empty list means only match against labelSelector.
+  
+                                This is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            maxSkew:
+                              description: |-
+                                MaxSkew describes the degree to which pods may be unevenly distributed.
+                                When `whenUnsatisfiable=DoNotSchedule`, it is the maximum permitted difference
+                                between the number of matching pods in the target topology and the global minimum.
+                                The global minimum is the minimum number of matching pods in an eligible domain
+                                or zero if the number of eligible domains is less than MinDomains.
+                                For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+                                labelSelector spread as 2/2/1:
+                                In this case, the global minimum is 1.
+                                | zone1 | zone2 | zone3 |
+                                |  P P  |  P P  |   P   |
+                                - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 2/2/2;
+                                scheduling it onto zone1(zone2) would make the ActualSkew(3-1) on zone1(zone2)
+                                violate MaxSkew(1).
+                                - if MaxSkew is 2, incoming pod can be scheduled onto any zone.
+                                When `whenUnsatisfiable=ScheduleAnyway`, it is used to give higher precedence
+                                to topologies that satisfy it.
+                                It's a required field. Default value is 1 and 0 is not allowed.
+                              format: int32
+                              type: integer
+                            minDomains:
+                              description: |-
+                                MinDomains indicates a minimum number of eligible domains.
+                                When the number of eligible domains with matching topology keys is less than minDomains,
+                                Pod Topology Spread treats "global minimum" as 0, and then the calculation of Skew is performed.
+                                And when the number of eligible domains with matching topology keys equals or greater than minDomains,
+                                this value has no effect on scheduling.
+                                As a result, when the number of eligible domains is less than minDomains,
+                                scheduler won't schedule more than maxSkew Pods to those domains.
+                                If value is nil, the constraint behaves as if MinDomains is equal to 1.
+                                Valid values are integers greater than 0.
+                                When value is not nil, WhenUnsatisfiable must be DoNotSchedule.
+  
+                                For example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same
+                                labelSelector spread as 2/2/2:
+                                | zone1 | zone2 | zone3 |
+                                |  P P  |  P P  |  P P  |
+                                The number of domains is less than 5(MinDomains), so "global minimum" is treated as 0.
+                                In this situation, new pod with the same labelSelector cannot be scheduled,
+                                because computed skew will be 3(3 - 0) if new Pod is scheduled to any of the three zones,
+                                it will violate MaxSkew.
+  
+                                This is a beta field and requires the MinDomainsInPodTopologySpread feature gate to be enabled (enabled by default).
+                              format: int32
+                              type: integer
+                            nodeAffinityPolicy:
+                              description: |-
+                                NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector
+                                when calculating pod topology spread skew. Options are:
+                                - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations.
+                                - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.
+  
+                                If this value is nil, the behavior is equivalent to the Honor policy.
+                                This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                              type: string
+                            nodeTaintsPolicy:
+                              description: |-
+                                NodeTaintsPolicy indicates how we will treat node taints when calculating
+                                pod topology spread skew. Options are:
+                                - Honor: nodes without taints, along with tainted nodes for which the incoming pod
+                                has a toleration, are included.
+                                - Ignore: node taints are ignored. All nodes are included.
+  
+                                If this value is nil, the behavior is equivalent to the Ignore policy.
+                                This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                              type: string
+                            topologyKey:
+                              description: |-
+                                TopologyKey is the key of node labels. Nodes that have a label with this key
+                                and identical values are considered to be in the same topology.
+                                We consider each <key, value> as a "bucket", and try to put balanced number
+                                of pods into each bucket.
+                                We define a domain as a particular instance of a topology.
+                                Also, we define an eligible domain as a domain whose nodes meet the requirements of
+                                nodeAffinityPolicy and nodeTaintsPolicy.
+                                e.g. If TopologyKey is "kubernetes.io/hostname", each Node is a domain of that topology.
+                                And, if TopologyKey is "topology.kubernetes.io/zone", each zone is a domain of that topology.
+                                It's a required field.
+                              type: string
+                            whenUnsatisfiable:
+                              description: |-
+                                WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy
+                                the spread constraint.
+                                - DoNotSchedule (default) tells the scheduler not to schedule it.
+                                - ScheduleAnyway tells the scheduler to schedule the pod in any location,
+                                  but giving higher precedence to topologies that would help reduce the
+                                  skew.
+                                A constraint is considered "Unsatisfiable" for an incoming pod
+                                if and only if every possible node assignment for that pod would violate
+                                "MaxSkew" on some topology.
+                                For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+                                labelSelector spread as 3/1/1:
+                                | zone1 | zone2 | zone3 |
+                                | P P P |   P   |   P   |
+                                If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled
+                                to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies
+                                MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler
+                                won't make it *more* imbalanced.
+                                It's a required field.
+                              type: string
+                          required:
+                          - maxSkew
+                          - topologyKey
+                          - whenUnsatisfiable
+                          type: object
+                        type: array
                       volumes:
                         description: |-
                           Volumes attached to this node alone, using any Kubernetes volume source.
@@ -4156,7 +4355,6 @@ spec:
                                     Tip: Ensure that the filesystem type is supported by the host operating system.
                                     Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                                     More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore
-                                    TODO: how do we prevent errors in the filesystem from compromising the machine
                                   type: string
                                 partition:
                                   description: |-
@@ -4273,7 +4471,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -4312,7 +4509,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -4381,7 +4577,6 @@ spec:
                                   description: |-
                                     Name of the referent.
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                   type: string
                                 optional:
                                   description: optional specify whether the ConfigMap
@@ -4417,7 +4612,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -4555,7 +4749,6 @@ spec:
                                 The volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts,
                                 and deleted when the pod is removed.
   
-  
                                 Use this if:
                                 a) the volume is only needed while the pod runs,
                                 b) features of normal volumes like restoring from snapshot or capacity
@@ -4566,16 +4759,13 @@ spec:
                                    information on the connection between this volume type
                                    and PersistentVolumeClaim).
   
-  
                                 Use PersistentVolumeClaim or one of the vendor-specific
                                 APIs for volumes that persist for longer than the lifecycle
                                 of an individual pod.
   
-  
                                 Use CSI for light-weight local ephemeral volumes if the CSI driver is meant to
                                 be used that way - see the documentation of the driver for
                                 more information.
-  
   
                                 A pod can use both types of ephemeral volumes and
                                 persistent volumes at the same time.
@@ -4590,7 +4780,6 @@ spec:
                                     entry. Pod validation will reject the pod if the concatenated name
                                     is not valid for a PVC (for example, too long).
   
-  
                                     An existing PVC with that name that is not owned by the pod
                                     will *not* be used for the pod to avoid using an unrelated
                                     volume by mistake. Starting the pod is then blocked until
@@ -4600,10 +4789,8 @@ spec:
                                     this should not be necessary, but it may be useful when
                                     manually reconstructing a broken cluster.
   
-  
                                     This field is read-only and no changes will be made by Kubernetes
                                     to the PVC after it has been created.
-  
   
                                     Required, must not be nil.
                                   properties:
@@ -4720,10 +4907,8 @@ spec:
                                                 Claims lists the names of resources, defined in spec.resourceClaims,
                                                 that are used by this container.
   
-  
                                                 This is an alpha field and requires enabling the
                                                 DynamicResourceAllocation feature gate.
-  
   
                                                 This field is immutable. It can only be set for containers.
                                               items:
@@ -4843,7 +5028,6 @@ spec:
                                     fsType is the filesystem type to mount.
                                     Must be a filesystem type supported by the host operating system.
                                     Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
-                                    TODO: how do we prevent errors in the filesystem from compromising the machine
                                   type: string
                                 lun:
                                   description: 'lun is Optional: FC target lun number'
@@ -4906,7 +5090,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -4940,7 +5123,6 @@ spec:
                                     Tip: Ensure that the filesystem type is supported by the host operating system.
                                     Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                                     More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk
-                                    TODO: how do we prevent errors in the filesystem from compromising the machine
                                   type: string
                                 partition:
                                   description: |-
@@ -5021,9 +5203,6 @@ spec:
                                 used for system agents or other privileged things that are allowed
                                 to see the host machine. Most containers will NOT need this.
                                 More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath
-                                ---
-                                TODO(jonesdl) We need to restrict who can use host directory mounts and who can/can not
-                                mount host directories as read/write.
                               properties:
                                 path:
                                   description: |-
@@ -5060,7 +5239,6 @@ spec:
                                     Tip: Ensure that the filesystem type is supported by the host operating system.
                                     Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                                     More info: https://kubernetes.io/docs/concepts/storage/volumes#iscsi
-                                    TODO: how do we prevent errors in the filesystem from compromising the machine
                                   type: string
                                 initiatorName:
                                   description: |-
@@ -5100,7 +5278,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -5313,7 +5490,6 @@ spec:
                                             description: |-
                                               Name of the referent.
                                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Add other useful fields. apiVersion, kind, uid?
                                             type: string
                                           optional:
                                             description: optional specify whether the
@@ -5449,7 +5625,6 @@ spec:
                                             description: |-
                                               Name of the referent.
                                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Add other useful fields. apiVersion, kind, uid?
                                             type: string
                                           optional:
                                             description: optional field specify whether
@@ -5538,7 +5713,6 @@ spec:
                                     Tip: Ensure that the filesystem type is supported by the host operating system.
                                     Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                                     More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd
-                                    TODO: how do we prevent errors in the filesystem from compromising the machine
                                   type: string
                                 image:
                                   description: |-
@@ -5581,7 +5755,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -5628,7 +5801,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -5747,7 +5919,6 @@ spec:
                                       description: |-
                                         Name of the referent.
                                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion, kind, uid?
                                       type: string
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -5915,10 +6086,8 @@ spec:
                                 Claims lists the names of resources, defined in spec.resourceClaims,
                                 that are used by this container.
   
-  
                                 This is an alpha field and requires enabling the
                                 DynamicResourceAllocation feature gate.
-  
   
                                 This field is immutable. It can only be set for containers.
                               items:
@@ -6939,7 +7108,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                       optional:
                                         description: Specify whether the ConfigMap or
@@ -7002,7 +7170,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                       optional:
                                         description: Specify whether the Secret or its
@@ -7086,7 +7253,6 @@ spec:
                                               description: |-
                                                 Name of the referent.
                                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                TODO: Add other useful fields. apiVersion, kind, uid?
                                               type: string
                                             optional:
                                               description: Specify whether the ConfigMap
@@ -7152,7 +7318,6 @@ spec:
                                               description: |-
                                                 Name of the referent.
                                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                TODO: Add other useful fields. apiVersion, kind, uid?
                                               type: string
                                             optional:
                                               description: Specify whether the Secret
@@ -7186,7 +7351,6 @@ spec:
                                           description: |-
                                             Name of the referent.
                                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                            TODO: Add other useful fields. apiVersion, kind, uid?
                                           type: string
                                         optional:
                                           description: Specify whether the ConfigMap
@@ -7205,7 +7369,6 @@ spec:
                                           description: |-
                                             Name of the referent.
                                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                            TODO: Add other useful fields. apiVersion, kind, uid?
                                           type: string
                                         optional:
                                           description: Specify whether the Secret must
@@ -7466,10 +7629,10 @@ spec:
                                         format: int32
                                         type: integer
                                       service:
+                                        default: ""
                                         description: |-
                                           Service is the name of the service to place in the gRPC HealthCheckRequest
                                           (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                           If this is not specified, the default behavior is defined by gRPC.
                                         type: string
@@ -7679,10 +7842,10 @@ spec:
                                         format: int32
                                         type: integer
                                       service:
+                                        default: ""
                                         description: |-
                                           Service is the name of the service to place in the gRPC HealthCheckRequest
                                           (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                           If this is not specified, the default behavior is defined by gRPC.
                                         type: string
@@ -7831,10 +7994,8 @@ spec:
                                       Claims lists the names of resources, defined in spec.resourceClaims,
                                       that are used by this container.
   
-  
                                       This is an alpha field and requires enabling the
                                       DynamicResourceAllocation feature gate.
-  
   
                                       This field is immutable. It can only be set for containers.
                                     items:
@@ -8026,7 +8187,6 @@ spec:
                                           type indicates which kind of seccomp profile will be applied.
                                           Valid options are:
   
-  
                                           Localhost - a profile defined in a file on the node should be used.
                                           RuntimeDefault - the container runtime default profile should be used.
                                           Unconfined - no profile should be applied.
@@ -8107,10 +8267,10 @@ spec:
                                         format: int32
                                         type: integer
                                       service:
+                                        default: ""
                                         description: |-
                                           Service is the name of the service to place in the gRPC HealthCheckRequest
                                           (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                           If this is not specified, the default behavior is defined by gRPC.
                                         type: string
@@ -8395,10 +8555,10 @@ spec:
                                   format: int32
                                   type: integer
                                 service:
+                                  default: ""
                                   description: |-
                                     Service is the name of the service to place in the gRPC HealthCheckRequest
                                     (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                     If this is not specified, the default behavior is defined by gRPC.
                                   type: string
@@ -8628,10 +8788,8 @@ spec:
                                         Claims lists the names of resources, defined in spec.resourceClaims,
                                         that are used by this container.
   
-  
                                         This is an alpha field and requires enabling the
                                         DynamicResourceAllocation feature gate.
-  
   
                                         This field is immutable. It can only be set for containers.
                                       items:
@@ -8907,10 +9065,8 @@ spec:
                                           Claims lists the names of resources, defined in spec.resourceClaims,
                                           that are used by this container.
   
-  
                                           This is an alpha field and requires enabling the
                                           DynamicResourceAllocation feature gate.
-  
   
                                           This field is immutable. It can only be set for containers.
                                         items:
@@ -9077,11 +9233,9 @@ spec:
                                 Some volume types allow the Kubelet to change the ownership of that volume
                                 to be owned by the pod:
   
-  
                                 1. The owning GID will be the FSGroup
                                 2. The setgid bit is set (new files created in the volume will be owned by FSGroup)
                                 3. The permission bits are OR'd with rw-rw----
-  
   
                                 If unset, the Kubelet will not modify the ownership and permissions of any volume.
                                 Note that this field cannot be set when spec.os.name is windows.
@@ -9169,7 +9323,6 @@ spec:
                                     type indicates which kind of seccomp profile will be applied.
                                     Valid options are:
   
-  
                                     Localhost - a profile defined in a file on the node should be used.
                                     RuntimeDefault - the container runtime default profile should be used.
                                     Unconfined - no profile should be applied.
@@ -9243,6 +9396,10 @@ spec:
                                   type: string
                               type: object
                           type: object
+                        priorityClassName:
+                          description: PriorityClassName is the name of the PriorityClass
+                            for the pod.
+                          type: string
                         readinessProbeSettings:
                           default:
                             failureThreshold: 3
@@ -9284,10 +9441,10 @@ spec:
                                   format: int32
                                   type: integer
                                 service:
+                                  default: ""
                                   description: |-
                                     Service is the name of the service to place in the gRPC HealthCheckRequest
                                     (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                     If this is not specified, the default behavior is defined by gRPC.
                                   type: string
@@ -9462,10 +9619,10 @@ spec:
                                   format: int32
                                   type: integer
                                 service:
+                                  default: ""
                                   description: |-
                                     Service is the name of the service to place in the gRPC HealthCheckRequest
                                     (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-  
   
                                     If this is not specified, the default behavior is defined by gRPC.
                                   type: string
@@ -9580,6 +9737,219 @@ spec:
                               format: int32
                               type: integer
                           type: object
+                        tolerations:
+                          items:
+                            description: |-
+                              The pod this Toleration is attached to tolerates any taint that matches
+                              the triple <key,value,effect> using the matching operator <operator>.
+                            properties:
+                              effect:
+                                description: |-
+                                  Effect indicates the taint effect to match. Empty means match all taint effects.
+                                  When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                                type: string
+                              key:
+                                description: |-
+                                  Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                                  If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                                type: string
+                              operator:
+                                description: |-
+                                  Operator represents a key's relationship to the value.
+                                  Valid operators are Exists and Equal. Defaults to Equal.
+                                  Exists is equivalent to wildcard for value, so that a pod can
+                                  tolerate all taints of a particular category.
+                                type: string
+                              tolerationSeconds:
+                                description: |-
+                                  TolerationSeconds represents the period of time the toleration (which must be
+                                  of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                                  it is not set, which means tolerate the taint forever (do not evict). Zero and
+                                  negative values will be treated as 0 (evict immediately) by the system.
+                                format: int64
+                                type: integer
+                              value:
+                                description: |-
+                                  Value is the taint value the toleration matches to.
+                                  If the operator is Exists, the value should be empty, otherwise just a regular string.
+                                type: string
+                            type: object
+                          type: array
+                        topologySpreadConstraints:
+                          items:
+                            description: TopologySpreadConstraint specifies how to spread
+                              matching pods among the given topology.
+                            properties:
+                              labelSelector:
+                                description: |-
+                                  LabelSelector is used to find matching pods.
+                                  Pods that match this label selector are counted to determine the number of pods
+                                  in their corresponding topology domain.
+                                properties:
+                                  matchExpressions:
+                                    description: matchExpressions is a list of label
+                                      selector requirements. The requirements are ANDed.
+                                    items:
+                                      description: |-
+                                        A label selector requirement is a selector that contains values, a key, and an operator that
+                                        relates the key and values.
+                                      properties:
+                                        key:
+                                          description: key is the label key that the
+                                            selector applies to.
+                                          type: string
+                                        operator:
+                                          description: |-
+                                            operator represents a key's relationship to a set of values.
+                                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                                          type: string
+                                        values:
+                                          description: |-
+                                            values is an array of string values. If the operator is In or NotIn,
+                                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                            the values array must be empty. This array is replaced during a strategic
+                                            merge patch.
+                                          items:
+                                            type: string
+                                          type: array
+                                      required:
+                                      - key
+                                      - operator
+                                      type: object
+                                    type: array
+                                  matchLabels:
+                                    additionalProperties:
+                                      type: string
+                                    description: |-
+                                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                    type: object
+                                type: object
+                                x-kubernetes-map-type: atomic
+                              matchLabelKeys:
+                                description: |-
+                                  MatchLabelKeys is a set of pod label keys to select the pods over which
+                                  spreading will be calculated. The keys are used to lookup values from the
+                                  incoming pod labels, those key-value labels are ANDed with labelSelector
+                                  to select the group of existing pods over which spreading will be calculated
+                                  for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+                                  MatchLabelKeys cannot be set when LabelSelector isn't set.
+                                  Keys that don't exist in the incoming pod labels will
+                                  be ignored. A null or empty list means only match against labelSelector.
+  
+                                  This is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).
+                                items:
+                                  type: string
+                                type: array
+                                x-kubernetes-list-type: atomic
+                              maxSkew:
+                                description: |-
+                                  MaxSkew describes the degree to which pods may be unevenly distributed.
+                                  When `whenUnsatisfiable=DoNotSchedule`, it is the maximum permitted difference
+                                  between the number of matching pods in the target topology and the global minimum.
+                                  The global minimum is the minimum number of matching pods in an eligible domain
+                                  or zero if the number of eligible domains is less than MinDomains.
+                                  For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+                                  labelSelector spread as 2/2/1:
+                                  In this case, the global minimum is 1.
+                                  | zone1 | zone2 | zone3 |
+                                  |  P P  |  P P  |   P   |
+                                  - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 2/2/2;
+                                  scheduling it onto zone1(zone2) would make the ActualSkew(3-1) on zone1(zone2)
+                                  violate MaxSkew(1).
+                                  - if MaxSkew is 2, incoming pod can be scheduled onto any zone.
+                                  When `whenUnsatisfiable=ScheduleAnyway`, it is used to give higher precedence
+                                  to topologies that satisfy it.
+                                  It's a required field. Default value is 1 and 0 is not allowed.
+                                format: int32
+                                type: integer
+                              minDomains:
+                                description: |-
+                                  MinDomains indicates a minimum number of eligible domains.
+                                  When the number of eligible domains with matching topology keys is less than minDomains,
+                                  Pod Topology Spread treats "global minimum" as 0, and then the calculation of Skew is performed.
+                                  And when the number of eligible domains with matching topology keys equals or greater than minDomains,
+                                  this value has no effect on scheduling.
+                                  As a result, when the number of eligible domains is less than minDomains,
+                                  scheduler won't schedule more than maxSkew Pods to those domains.
+                                  If value is nil, the constraint behaves as if MinDomains is equal to 1.
+                                  Valid values are integers greater than 0.
+                                  When value is not nil, WhenUnsatisfiable must be DoNotSchedule.
+  
+                                  For example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same
+                                  labelSelector spread as 2/2/2:
+                                  | zone1 | zone2 | zone3 |
+                                  |  P P  |  P P  |  P P  |
+                                  The number of domains is less than 5(MinDomains), so "global minimum" is treated as 0.
+                                  In this situation, new pod with the same labelSelector cannot be scheduled,
+                                  because computed skew will be 3(3 - 0) if new Pod is scheduled to any of the three zones,
+                                  it will violate MaxSkew.
+  
+                                  This is a beta field and requires the MinDomainsInPodTopologySpread feature gate to be enabled (enabled by default).
+                                format: int32
+                                type: integer
+                              nodeAffinityPolicy:
+                                description: |-
+                                  NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector
+                                  when calculating pod topology spread skew. Options are:
+                                  - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations.
+                                  - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.
+  
+                                  If this value is nil, the behavior is equivalent to the Honor policy.
+                                  This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                                type: string
+                              nodeTaintsPolicy:
+                                description: |-
+                                  NodeTaintsPolicy indicates how we will treat node taints when calculating
+                                  pod topology spread skew. Options are:
+                                  - Honor: nodes without taints, along with tainted nodes for which the incoming pod
+                                  has a toleration, are included.
+                                  - Ignore: node taints are ignored. All nodes are included.
+  
+                                  If this value is nil, the behavior is equivalent to the Ignore policy.
+                                  This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
+                                type: string
+                              topologyKey:
+                                description: |-
+                                  TopologyKey is the key of node labels. Nodes that have a label with this key
+                                  and identical values are considered to be in the same topology.
+                                  We consider each <key, value> as a "bucket", and try to put balanced number
+                                  of pods into each bucket.
+                                  We define a domain as a particular instance of a topology.
+                                  Also, we define an eligible domain as a domain whose nodes meet the requirements of
+                                  nodeAffinityPolicy and nodeTaintsPolicy.
+                                  e.g. If TopologyKey is "kubernetes.io/hostname", each Node is a domain of that topology.
+                                  And, if TopologyKey is "topology.kubernetes.io/zone", each zone is a domain of that topology.
+                                  It's a required field.
+                                type: string
+                              whenUnsatisfiable:
+                                description: |-
+                                  WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy
+                                  the spread constraint.
+                                  - DoNotSchedule (default) tells the scheduler not to schedule it.
+                                  - ScheduleAnyway tells the scheduler to schedule the pod in any location,
+                                    but giving higher precedence to topologies that would help reduce the
+                                    skew.
+                                  A constraint is considered "Unsatisfiable" for an incoming pod
+                                  if and only if every possible node assignment for that pod would violate
+                                  "MaxSkew" on some topology.
+                                  For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+                                  labelSelector spread as 3/1/1:
+                                  | zone1 | zone2 | zone3 |
+                                  | P P P |   P   |   P   |
+                                  If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled
+                                  to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies
+                                  MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler
+                                  won't make it *more* imbalanced.
+                                  It's a required field.
+                                type: string
+                            required:
+                            - maxSkew
+                            - topologyKey
+                            - whenUnsatisfiable
+                            type: object
+                          type: array
                         volumes:
                           description: |-
                             Volumes attached to this node alone, using any Kubernetes volume source.
@@ -9601,7 +9971,6 @@ spec:
                                       Tip: Ensure that the filesystem type is supported by the host operating system.
                                       Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                                       More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore
-                                      TODO: how do we prevent errors in the filesystem from compromising the machine
                                     type: string
                                   partition:
                                     description: |-
@@ -9718,7 +10087,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                     type: object
                                     x-kubernetes-map-type: atomic
@@ -9757,7 +10125,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                     type: object
                                     x-kubernetes-map-type: atomic
@@ -9826,7 +10193,6 @@ spec:
                                     description: |-
                                       Name of the referent.
                                       More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                      TODO: Add other useful fields. apiVersion, kind, uid?
                                     type: string
                                   optional:
                                     description: optional specify whether the ConfigMap
@@ -9862,7 +10228,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                     type: object
                                     x-kubernetes-map-type: atomic
@@ -10002,7 +10367,6 @@ spec:
                                   The volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts,
                                   and deleted when the pod is removed.
   
-  
                                   Use this if:
                                   a) the volume is only needed while the pod runs,
                                   b) features of normal volumes like restoring from snapshot or capacity
@@ -10013,16 +10377,13 @@ spec:
                                      information on the connection between this volume type
                                      and PersistentVolumeClaim).
   
-  
                                   Use PersistentVolumeClaim or one of the vendor-specific
                                   APIs for volumes that persist for longer than the lifecycle
                                   of an individual pod.
   
-  
                                   Use CSI for light-weight local ephemeral volumes if the CSI driver is meant to
                                   be used that way - see the documentation of the driver for
                                   more information.
-  
   
                                   A pod can use both types of ephemeral volumes and
                                   persistent volumes at the same time.
@@ -10037,7 +10398,6 @@ spec:
                                       entry. Pod validation will reject the pod if the concatenated name
                                       is not valid for a PVC (for example, too long).
   
-  
                                       An existing PVC with that name that is not owned by the pod
                                       will *not* be used for the pod to avoid using an unrelated
                                       volume by mistake. Starting the pod is then blocked until
@@ -10047,10 +10407,8 @@ spec:
                                       this should not be necessary, but it may be useful when
                                       manually reconstructing a broken cluster.
   
-  
                                       This field is read-only and no changes will be made by Kubernetes
                                       to the PVC after it has been created.
-  
   
                                       Required, must not be nil.
                                     properties:
@@ -10167,10 +10525,8 @@ spec:
                                                   Claims lists the names of resources, defined in spec.resourceClaims,
                                                   that are used by this container.
   
-  
                                                   This is an alpha field and requires enabling the
                                                   DynamicResourceAllocation feature gate.
-  
   
                                                   This field is immutable. It can only be set for containers.
                                                 items:
@@ -10291,7 +10647,6 @@ spec:
                                       fsType is the filesystem type to mount.
                                       Must be a filesystem type supported by the host operating system.
                                       Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
-                                      TODO: how do we prevent errors in the filesystem from compromising the machine
                                     type: string
                                   lun:
                                     description: 'lun is Optional: FC target lun number'
@@ -10354,7 +10709,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                     type: object
                                     x-kubernetes-map-type: atomic
@@ -10388,7 +10742,6 @@ spec:
                                       Tip: Ensure that the filesystem type is supported by the host operating system.
                                       Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                                       More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk
-                                      TODO: how do we prevent errors in the filesystem from compromising the machine
                                     type: string
                                   partition:
                                     description: |-
@@ -10469,9 +10822,6 @@ spec:
                                   used for system agents or other privileged things that are allowed
                                   to see the host machine. Most containers will NOT need this.
                                   More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath
-                                  ---
-                                  TODO(jonesdl) We need to restrict who can use host directory mounts and who can/can not
-                                  mount host directories as read/write.
                                 properties:
                                   path:
                                     description: |-
@@ -10508,7 +10858,6 @@ spec:
                                       Tip: Ensure that the filesystem type is supported by the host operating system.
                                       Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                                       More info: https://kubernetes.io/docs/concepts/storage/volumes#iscsi
-                                      TODO: how do we prevent errors in the filesystem from compromising the machine
                                     type: string
                                   initiatorName:
                                     description: |-
@@ -10548,7 +10897,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                     type: object
                                     x-kubernetes-map-type: atomic
@@ -10761,7 +11109,6 @@ spec:
                                               description: |-
                                                 Name of the referent.
                                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                TODO: Add other useful fields. apiVersion, kind, uid?
                                               type: string
                                             optional:
                                               description: optional specify whether
@@ -10898,7 +11245,6 @@ spec:
                                               description: |-
                                                 Name of the referent.
                                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                                TODO: Add other useful fields. apiVersion, kind, uid?
                                               type: string
                                             optional:
                                               description: optional field specify whether
@@ -10987,7 +11333,6 @@ spec:
                                       Tip: Ensure that the filesystem type is supported by the host operating system.
                                       Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                                       More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd
-                                      TODO: how do we prevent errors in the filesystem from compromising the machine
                                     type: string
                                   image:
                                     description: |-
@@ -11030,7 +11375,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                     type: object
                                     x-kubernetes-map-type: atomic
@@ -11077,7 +11421,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                     type: object
                                     x-kubernetes-map-type: atomic
@@ -11196,7 +11539,6 @@ spec:
                                         description: |-
                                           Name of the referent.
                                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                          TODO: Add other useful fields. apiVersion, kind, uid?
                                         type: string
                                     type: object
                                     x-kubernetes-map-type: atomic
@@ -11326,7 +11668,6 @@ spec:
                             clients must ensure that clusterIPs[0] and clusterIP have the same
                             value.
   
-  
                             This field may hold a maximum of two entries (dual-stack IPs, in either order).
                             These IPs must correspond to the values of the ipFamilies field. Both
                             clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.
@@ -11405,7 +11746,6 @@ spec:
                             NodePort, and LoadBalancer, and does apply to "headless" services.
                             This field will be wiped when updating a Service to type ExternalName.
   
-  
                             This field may hold a maximum of two entries (dual-stack families, in
                             either order).  These families must correspond to the values of the
                             clusterIPs field, if specified. Both clusterIPs and ipFamilies are
@@ -11475,16 +11815,13 @@ spec:
                                   This field follows standard Kubernetes label syntax.
                                   Valid values are either:
   
-  
                                   * Un-prefixed protocol names - reserved for IANA standard service names (as per
                                   RFC-6335 and https://www.iana.org/assignments/service-names).
-  
   
                                   * Kubernetes-defined prefixed names:
                                     * 'kubernetes.io/h2c' - HTTP/2 over cleartext as described in https://www.rfc-editor.org/rfc/rfc7540
                                     * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455
                                     * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455
-  
   
                                   * Other protocols should use implementation-defined prefixed names such as
                                   mycompany.com/my-custom-protocol.
@@ -11653,7 +11990,6 @@ spec:
                             Tip: Ensure that the filesystem type is supported by the host operating system.
                             Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                             More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore
-                            TODO: how do we prevent errors in the filesystem from compromising the machine
                           type: string
                         partition:
                           description: |-
@@ -11767,7 +12103,6 @@ spec:
                               description: |-
                                 Name of the referent.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -11806,7 +12141,6 @@ spec:
                               description: |-
                                 Name of the referent.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -11874,7 +12208,6 @@ spec:
                           description: |-
                             Name of the referent.
                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                            TODO: Add other useful fields. apiVersion, kind, uid?
                           type: string
                         optional:
                           description: optional specify whether the ConfigMap or its
@@ -11910,7 +12243,6 @@ spec:
                               description: |-
                                 Name of the referent.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -12045,7 +12377,6 @@ spec:
                         The volume's lifecycle is tied to the pod that defines it - it will be created before the pod starts,
                         and deleted when the pod is removed.
   
-  
                         Use this if:
                         a) the volume is only needed while the pod runs,
                         b) features of normal volumes like restoring from snapshot or capacity
@@ -12056,16 +12387,13 @@ spec:
                            information on the connection between this volume type
                            and PersistentVolumeClaim).
   
-  
                         Use PersistentVolumeClaim or one of the vendor-specific
                         APIs for volumes that persist for longer than the lifecycle
                         of an individual pod.
   
-  
                         Use CSI for light-weight local ephemeral volumes if the CSI driver is meant to
                         be used that way - see the documentation of the driver for
                         more information.
-  
   
                         A pod can use both types of ephemeral volumes and
                         persistent volumes at the same time.
@@ -12080,7 +12408,6 @@ spec:
                             entry. Pod validation will reject the pod if the concatenated name
                             is not valid for a PVC (for example, too long).
   
-  
                             An existing PVC with that name that is not owned by the pod
                             will *not* be used for the pod to avoid using an unrelated
                             volume by mistake. Starting the pod is then blocked until
@@ -12090,10 +12417,8 @@ spec:
                             this should not be necessary, but it may be useful when
                             manually reconstructing a broken cluster.
   
-  
                             This field is read-only and no changes will be made by Kubernetes
                             to the PVC after it has been created.
-  
   
                             Required, must not be nil.
                           properties:
@@ -12210,10 +12535,8 @@ spec:
                                         Claims lists the names of resources, defined in spec.resourceClaims,
                                         that are used by this container.
   
-  
                                         This is an alpha field and requires enabling the
                                         DynamicResourceAllocation feature gate.
-  
   
                                         This field is immutable. It can only be set for containers.
                                       items:
@@ -12332,7 +12655,6 @@ spec:
                             fsType is the filesystem type to mount.
                             Must be a filesystem type supported by the host operating system.
                             Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
-                            TODO: how do we prevent errors in the filesystem from compromising the machine
                           type: string
                         lun:
                           description: 'lun is Optional: FC target lun number'
@@ -12395,7 +12717,6 @@ spec:
                               description: |-
                                 Name of the referent.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -12429,7 +12750,6 @@ spec:
                             Tip: Ensure that the filesystem type is supported by the host operating system.
                             Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                             More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk
-                            TODO: how do we prevent errors in the filesystem from compromising the machine
                           type: string
                         partition:
                           description: |-
@@ -12510,9 +12830,6 @@ spec:
                         used for system agents or other privileged things that are allowed
                         to see the host machine. Most containers will NOT need this.
                         More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath
-                        ---
-                        TODO(jonesdl) We need to restrict who can use host directory mounts and who can/can not
-                        mount host directories as read/write.
                       properties:
                         path:
                           description: |-
@@ -12549,7 +12866,6 @@ spec:
                             Tip: Ensure that the filesystem type is supported by the host operating system.
                             Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                             More info: https://kubernetes.io/docs/concepts/storage/volumes#iscsi
-                            TODO: how do we prevent errors in the filesystem from compromising the machine
                           type: string
                         initiatorName:
                           description: |-
@@ -12589,7 +12905,6 @@ spec:
                               description: |-
                                 Name of the referent.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -12800,7 +13115,6 @@ spec:
                                     description: |-
                                       Name of the referent.
                                       More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                      TODO: Add other useful fields. apiVersion, kind, uid?
                                     type: string
                                   optional:
                                     description: optional specify whether the ConfigMap
@@ -12931,7 +13245,6 @@ spec:
                                     description: |-
                                       Name of the referent.
                                       More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                      TODO: Add other useful fields. apiVersion, kind, uid?
                                     type: string
                                   optional:
                                     description: optional field specify whether the
@@ -13020,7 +13333,6 @@ spec:
                             Tip: Ensure that the filesystem type is supported by the host operating system.
                             Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                             More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd
-                            TODO: how do we prevent errors in the filesystem from compromising the machine
                           type: string
                         image:
                           description: |-
@@ -13063,7 +13375,6 @@ spec:
                               description: |-
                                 Name of the referent.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -13110,7 +13421,6 @@ spec:
                               description: |-
                                 Name of the referent.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
@@ -13228,7 +13538,6 @@ spec:
                               description: |-
                                 Name of the referent.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
                               type: string
                           type: object
                           x-kubernetes-map-type: atomic
