@@ -335,6 +335,17 @@ var _ = Describe("StatefulSet", func() {
 			Expect(serverOpts).To(ContainSubstring("-Dteamcity.node.data.path=/mnt/node-data-dir"))
 			Expect(serverOpts).NotTo(ContainSubstring("/wrong"))
 		})
+		It("writes the logs to the node data dir when it is set", func() {
+			Instance.Spec.MainNode.Spec.NodeDataDirVolumeClaim = getNodeDataDirClaim("node-data-dir-" + Instance.Spec.MainNode.Name)
+			obj, err := DefaultStatefulSetBuilder.BuildObjectList()
+			Expect(err).NotTo(HaveOccurred())
+			stsObject := obj[0]
+			err = DefaultStatefulSetBuilder.Update(stsObject)
+			Expect(err).NotTo(HaveOccurred())
+			containerEnv := stsObject.(*v1.StatefulSet).Spec.Template.Spec.Containers[0].Env
+			logsPathIndex := slices.IndexFunc(containerEnv, func(c v12.EnvVar) bool { return c.Name == "TEAMCITY_LOGS_PATH" })
+			Expect(containerEnv[logsPathIndex].Value).To(Equal("/mnt/node-data-dir/logs"))
+		})
 	})
 	Context("TeamCity with additional mounts", func() {
 		BeforeEach(func() {

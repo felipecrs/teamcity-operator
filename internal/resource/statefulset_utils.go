@@ -49,12 +49,12 @@ func CreateEmptyStatefulSet(name string, namespace string, labels map[string]str
 		},
 	}
 }
-func DefaultEnvironmentVariableBuilder(nodeName string, xmxValue string, dataDirPath string, extraServerOpts string) []v12.EnvVar {
+func DefaultEnvironmentVariableBuilder(nodeName string, xmxValue string, dataDirPath string, logsPath string, extraServerOpts string) []v12.EnvVar {
 	return []v12.EnvVar{
 		PodNameEnvVariableBuilder(),
 		PodNamespaceEnvVariableBuilder(),
 		DataDirPathEnvVar(dataDirPath),
-		LogDirPathEnvVar(dataDirPath, nodeName),
+		LogDirPathEnvVar(logsPath),
 		ServerMemOptsEnvVar(xmxValue),
 		ServerOptsEnvVar(dataDirPath, nodeName, extraServerOpts),
 	}
@@ -67,12 +67,20 @@ func DataDirPathEnvVar(dataDirPath string) v12.EnvVar {
 	}
 }
 
-// Each node gets its own logs directory: they share the data directory, and
-// would otherwise write to the same log, pid and lock files.
-func LogDirPathEnvVar(dataDirPath string, nodeName string) v12.EnvVar {
+// LogsPath is where a node writes its logs: in its own data directory when it
+// has one, otherwise in a directory of its own in the shared data directory,
+// so that nodes never write to the same log, pid and lock files.
+func LogsPath(dataDirPath string, nodeDataDirPath string, nodeName string) string {
+	if nodeDataDirPath != "" {
+		return nodeDataDirPath + "/logs"
+	}
+	return fmt.Sprintf("%s/logs/%s", dataDirPath, nodeName)
+}
+
+func LogDirPathEnvVar(logsPath string) v12.EnvVar {
 	return v12.EnvVar{
 		Name:  "TEAMCITY_LOGS_PATH",
-		Value: fmt.Sprintf("%s/logs/%s", dataDirPath, nodeName),
+		Value: logsPath,
 	}
 }
 
@@ -285,9 +293,11 @@ func BuildEnvVariablesFromGlobalAndNodeSpecificSettings(instance *TeamCity, node
 	if len(node.Spec.Responsibilities) > 0 {
 		responsibilities = ConvertResponsibilitiesToServerOptions(node.Spec.Responsibilities)
 	}
-	extraServerOpts = responsibilities + NodeDataDirServerOpt(instance.NodeDataDirPathFor(node)) + extraServerOpts
+	nodeDataDirPath := instance.NodeDataDirPathFor(node)
+	extraServerOpts = responsibilities + NodeDataDirServerOpt(nodeDataDirPath) + extraServerOpts
 	xmxValue := XmxValueCalculator(instance.Spec.XmxPercentage, node.Spec.Requests.Memory().Value())
-	envVars := DefaultEnvironmentVariableBuilder(node.Name, xmxValue, dataDirPath, extraServerOpts)
+	logsPath := LogsPath(dataDirPath, nodeDataDirPath, node.Name)
+	envVars := DefaultEnvironmentVariableBuilder(node.Name, xmxValue, dataDirPath, logsPath, extraServerOpts)
 	envVars = append(envVars, node.Spec.Env...)
 
 	// The operator appends this after the node env, so a copy in the node
